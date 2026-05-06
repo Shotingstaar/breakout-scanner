@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="sv">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0043)file:///C:/Users/robba/Downloads/index.html -->
+<html lang="sv"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Breakout Scanner</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="./index_files/chart.umd.min.js.ladda ned"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
 
@@ -539,13 +539,13 @@
   <div class="header">
     <div class="logo">BREAK<span>OUT</span></div>
     <div class="market-status">
-      <div id="statusDot" class="status-dot inactive"></div>
-      <span id="statusText">Börsen stängd</span>
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText" style="color: var(--green);">Börsen öppen</span>
     </div>
   </div>
 
   <!-- Notification banner -->
-  <div id="notifBanner" class="notif-banner" style="display:none">
+  <div id="notifBanner" class="notif-banner" style="display: flex;">
     <span>🔔</span>
     <div class="notif-banner-text">Aktivera notiser för att få varningar vid breakout</div>
     <button class="notif-btn" onclick="requestNotifications()">Aktivera</button>
@@ -554,13 +554,13 @@
   <!-- Index cards -->
   <div class="indices">
     <div class="index-card sp">
-      <div class="index-name">S&P 500</div>
-      <div class="index-value" id="spValue">5,648</div>
+      <div class="index-name">S&amp;P 500</div>
+      <div class="index-value" id="spValue">5,635</div>
       <div class="index-change up" id="spChange">▲ +0.82%</div>
     </div>
     <div class="index-card dj">
       <div class="index-name">DOW JONES</div>
-      <div class="index-value" id="djValue">42,114</div>
+      <div class="index-value" id="djValue">42,103</div>
       <div class="index-change up" id="djChange">▲ +0.54%</div>
     </div>
   </div>
@@ -591,7 +591,7 @@
         <div class="control-sub">Kör efter börsens stängning</div>
       </div>
       <label class="toggle">
-        <input type="checkbox" id="autoScan" checked onchange="toggleAuto()">
+        <input type="checkbox" id="autoScan" checked="" onchange="toggleAuto()">
         <div class="toggle-track"></div>
       </label>
     </div>
@@ -610,6 +610,20 @@
     <button class="scan-btn" id="scanBtn" onclick="runScan()">
       <span>▶ Kör skanning</span>
     </button>
+  </div>
+
+  <!-- API Status banner -->
+  <div id="apiBanner" style="display:none; border-radius:10px; padding:12px 14px; margin-bottom:16px; align-items:center; gap:10px; font-size:11px; border:1px solid; line-height:1.5;"></div>
+
+  <!-- Scan progress -->
+  <div id="scanProgress" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:11px; color:var(--muted);">
+    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+      <span style="color:var(--accent); font-weight:700;">SKANNAR</span>
+      <span id="progressText">0 / 0 aktier</span>
+    </div>
+    <div style="background:var(--surface2); border-radius:4px; height:6px; overflow:hidden;">
+      <div id="progressBar" style="height:100%; background:var(--accent); width:0%; transition:width 0.3s; border-radius:4px;"></div>
+    </div>
   </div>
 
   <!-- Results -->
@@ -632,7 +646,8 @@
 // ==========================================
 // CONFIG
 // ==========================================
-// Ingen API-nyckel behövs — Yahoo Finance är gratis och obegränsat
+// Finnhub API-nyckel — byt ut mot din nyckel från finnhub.io
+const FINNHUB_KEY = 'd7tjpi9r01qlbd3ken3gd7tjpi9r01qlbd3ken40';
 
 // Fullständiga S&P 500 topp 50 + alla 30 Dow Jones-aktier
 const SP500_SAMPLE = [
@@ -790,7 +805,6 @@ async function runScan() {
   const days = parseInt(document.getElementById('daysInput').value) || 100;
   const volFactor = parseFloat(document.getElementById('volInput').value) || 1.5;
 
-  // Kombinera index
   const all = [
     ...SP500_SAMPLE.map(t => ({ticker: t, index: 'S&P 500', badge: 'badge-sp'})),
     ...DOW_TICKERS.filter(t => !SP500_SAMPLE.includes(t)).map(t => ({ticker: t, index: 'DOW', badge: 'badge-dj'}))
@@ -798,16 +812,37 @@ async function runScan() {
 
   scanResults = [];
 
-  // Hämta data från Yahoo Finance — skannar alla aktier
-  for (const stock of all) {
-    await delay(200); // liten paus för att inte överbelasta
-    const result = await analyzeStock(stock.ticker, stock.index, stock.badge, days, volFactor);
-    if (result) scanResults.push(result);
+  // Visa progress
+  const progressEl = document.getElementById('scanProgress');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  progressEl.style.display = 'block';
+  progressBar.style.width = '0%';
+  progressText.textContent = `0 / ${all.length} aktier`;
+
+  // Testa API-anslutning först
+  const apiOk = await testApiConnection();
+  if (!apiOk) {
+    btn.classList.remove('loading');
+    btn.querySelector('span').textContent = '▶ Kör skanning';
+    progressEl.style.display = 'none';
+    return;
   }
 
-  // Sortera: starkaste signal först
-  scanResults.sort((a, b) => b.volRatio - a.volRatio);
+  let scanned = 0;
+  for (const stock of all) {
+    await delay(220);
+    const result = await analyzeStock(stock.ticker, stock.index, stock.badge, days, volFactor);
+    if (result) scanResults.push(result);
+    scanned++;
+    const pct = Math.round((scanned / all.length) * 100);
+    progressBar.style.width = pct + '%';
+    progressText.textContent = `${scanned} / ${all.length} aktier`;
+  }
 
+  scanResults.sort((a, b) => b.volRatio - a.volRatio);
+  progressEl.style.display = 'none';
+  showApiBanner('success', `✅ Klar — ${scanned} aktier skannade · ${scanResults.length} breakouts hittade`);
   renderResults(scanResults);
   updateLastScan();
 
@@ -821,79 +856,102 @@ async function runScan() {
 
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+async function testApiConnection() {
+  if (FINNHUB_KEY === 'DIN_NYCKEL_HÄR') {
+    showApiBanner('error', '⚠️ Ingen API-nyckel — gå till finnhub.io och skaffa gratis nyckel, byt sedan ut DIN_NYCKEL_HÄR i koden');
+    return false;
+  }
+  try {
+    const quoteUrl = `https://finnhub.io/api/v1/quote?symbol=AAPL&token=${FINNHUB_KEY}`;
+    const resp = await fetch(`https://corsproxy.io/?${encodeURIComponent(quoteUrl)}`);
+    if (resp.status === 401 || resp.status === 403) {
+      showApiBanner('error', '🔴 API-nyckel ogiltig — kontrollera din nyckel på finnhub.io');
+      return false;
+    }
+    if (!resp.ok) {
+      showApiBanner('error', `🔴 Anslutningsfel (${resp.status}) — kontrollera internetanslutningen`);
+      return false;
+    }
+    showApiBanner('success', '🟢 Ansluten till Finnhub — hämtar aktiedata...');
+    return true;
+  } catch (err) {
+    showApiBanner('error', '🔴 Blockerad eller ingen internet — kontrollera anslutningen och försök igen');
+    return false;
+  }
+}
+
+function showApiBanner(type, msg) {
+  const banner = document.getElementById('apiBanner');
+  if (type === 'success') {
+    banner.style.cssText = 'display:flex; border-radius:10px; padding:12px 14px; margin-bottom:16px; align-items:center; gap:10px; font-size:11px; line-height:1.5; background:rgba(0,255,136,0.06); border:1px solid rgba(0,255,136,0.25); color:#00ff88;';
+  } else {
+    banner.style.cssText = 'display:flex; border-radius:10px; padding:12px 14px; margin-bottom:16px; align-items:center; gap:10px; font-size:11px; line-height:1.5; background:rgba(255,51,102,0.08); border:1px solid rgba(255,51,102,0.3); color:#ff3366;';
+  }
+  banner.textContent = msg;
+  if (type === 'success') setTimeout(() => { banner.style.display = 'none'; }, 8000);
+}
+
 // ==========================================
-// STOCK ANALYSIS — Yahoo Finance (gratis, obegränsat)
+// STOCK ANALYSIS — Finnhub API (ingen Content-Type header = ingen CORS-blockering)
 // ==========================================
 async function analyzeStock(ticker, index, badge, days, volFactor) {
   try {
-    // Yahoo Finance v8 — hämtar daglig OHLCV för senaste ~6 månader (126 handelsdagar)
-    const period = days + 30; // lite extra marginal
     const to   = Math.floor(Date.now() / 1000);
-    const from = to - period * 24 * 3600;
+    const from = to - (days + 30) * 24 * 3600;
 
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&period1=${from}&period2=${to}`;
-
-    const resp = await fetch(url, {
-      headers: { 'Accept': 'application/json' }
-    });
+    // Använder CORS-proxy för att undvika blockering från GitHub Pages
+    const finnhubUrl = `https://finnhub.io/api/v1/stock/candle?symbol=${ticker}&resolution=D&from=${from}&to=${to}&token=${FINNHUB_KEY}`;
+    const url = `https://corsproxy.io/?${encodeURIComponent(finnhubUrl)}`;
+    const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
 
-    const result = json?.chart?.result?.[0];
-    if (!result) return null;
+    if (json.s !== 'ok' || !json.c || json.c.length < days + 1) return null;
 
-    const timestamps = result.timestamps || result.timestamp;
-    const quotes     = result.indicators?.quote?.[0];
-    if (!timestamps || !quotes) return null;
+    const closes     = json.c;
+    const highs      = json.h;
+    const volumes    = json.v;
+    const timestamps = json.t;
+    const n = closes.length;
 
-    const closes  = quotes.close;
-    const highs   = quotes.high;
-    const volumes = quotes.volume;
+    const todayClose     = closes[n - 1];
+    const todayVol       = volumes[n - 1];
+    const todayTimestamp = timestamps[n - 1];
+    const prevClose      = closes[n - 2];
+    const changePct      = ((todayClose - prevClose) / prevClose * 100);
 
-    // Filtrera bort null-värden
-    const valid = timestamps
-      .map((t, i) => ({ t, c: closes[i], h: highs[i], v: volumes[i] }))
-      .filter(d => d.c != null && d.h != null && d.v != null);
+    // Kontrollera hur gammal datan är
+    const dataDate = new Date(todayTimestamp * 1000);
+    const now      = new Date();
+    const diffDays = Math.floor((now - dataDate) / (1000 * 3600 * 24));
+    const dateStr  = dataDate.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+    const isOld    = diffDays > 3;
 
-    if (valid.length < days + 1) return null;
+    const lookbackHighs = highs.slice(-(days + 1), -1);
+    const high100 = Math.max(...lookbackHighs);
 
-    // Dagens (senaste) data
-    const today   = valid[valid.length - 1];
-    const prev    = valid[valid.length - 2];
-    const lookback = valid.slice(-(days + 1), -1); // exklusive idag
+    const last20vols = volumes.slice(-21, -1);
+    const avgVol = last20vols.reduce((s, v) => s + v, 0) / last20vols.length;
 
-    const todayClose = today.c;
-    const todayVol   = today.v;
-    const changePct  = ((todayClose - prev.c) / prev.c * 100);
+    if (todayClose <= high100) return null;
+    if (todayVol < avgVol * volFactor) return null;
 
-    // 100-dagars högsta (high-pris, exkl idag)
-    const high100 = Math.max(...lookback.map(d => d.h));
-
-    // Genomsnittlig volym senaste 20 dagarna (exkl idag)
-    const last20  = valid.slice(-(21), -1);
-    const avgVol  = last20.reduce((s, d) => s + d.v, 0) / last20.length;
-
-    // Kontrollera breakout-villkor
-    const isHighBreakout = todayClose > high100;
-    const isHighVolume   = todayVol   >= avgVol * volFactor;
-    if (!isHighBreakout || !isHighVolume) return null;
-
-    // Prishistorik för graf
-    const priceHistory = lookback.slice(-days).map(d => +d.c.toFixed(2));
+    const priceHistory = closes.slice(-(days + 1), -1).map(c => +c.toFixed(2));
     priceHistory.push(+todayClose.toFixed(2));
 
     return {
-      ticker,
-      index,
-      badge,
-      price:       todayClose.toFixed(2),
-      high100:     high100.toFixed(2),
-      change:      changePct.toFixed(2),
+      ticker, index, badge,
+      price:    todayClose.toFixed(2),
+      high100:  high100.toFixed(2),
+      change:   changePct.toFixed(2),
       avgVol,
       todayVol,
-      volRatio:    todayVol / avgVol,
+      volRatio: todayVol / avgVol,
       priceHistory,
-      days
+      days,
+      dateStr,
+      diffDays,
+      isOld
     };
 
   } catch (err) {
@@ -936,10 +994,12 @@ function renderResults(results) {
         <div class="stock-index-badge ${r.badge}">${r.index}</div>
       </div>
 
+      ${r.isOld ? `<div style="background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:6px;padding:7px 10px;margin-bottom:8px;font-size:10px;color:#ff6b35;">⚠️ Gammal data — breakout skedde ${r.dateStr} (${r.diffDays} dagar sedan)</div>` : ''}
+
       <div class="signal-bar">
         <span class="signal-icon">🚨</span>
         <span class="signal-text">${r.days}-DAGARS BREAKOUT</span>
-        <span class="signal-sub">+${(r.volRatio).toFixed(1)}× vol</span>
+        <span class="signal-sub">${r.dateStr} · +${(r.volRatio).toFixed(1)}× vol</span>
       </div>
 
       <div class="stock-metrics">
@@ -1111,5 +1171,6 @@ function updateLastScan() {
     `Senaste skanning: ${now.toLocaleTimeString('sv-SE', {hour:'2-digit',minute:'2-digit'})} — ${now.toLocaleDateString('sv-SE')}`;
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
