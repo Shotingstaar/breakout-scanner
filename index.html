@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0043)file:///C:/Users/robba/Downloads/index.html -->
+<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_1.html -->
 <html lang="sv"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -360,6 +360,7 @@
 
   .badge-sp { color: var(--accent); border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.08); }
   .badge-dj { color: var(--gold); border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.08); }
+  .badge-st { color: #00ccff; border-color: rgba(0,204,255,0.3); background: rgba(0,204,255,0.08); }
 
   .stock-metrics {
     display: grid;
@@ -555,13 +556,22 @@
   <div class="indices">
     <div class="index-card sp">
       <div class="index-name">S&amp;P 500</div>
-      <div class="index-value" id="spValue">5,635</div>
+      <div class="index-value" id="spValue">5,646</div>
       <div class="index-change up" id="spChange">▲ +0.82%</div>
     </div>
     <div class="index-card dj">
       <div class="index-name">DOW JONES</div>
-      <div class="index-value" id="djValue">42,103</div>
+      <div class="index-value" id="djValue">42,120</div>
       <div class="index-change up" id="djChange">▲ +0.54%</div>
+    </div>
+  </div>
+
+  <!-- Stockholm index card -->
+  <div style="margin-bottom:20px;">
+    <div class="index-card" style="border-top:2px solid #00ccff;">
+      <div class="index-name">STOCKHOLM (OMXS30)</div>
+      <div class="index-value" id="stValue">2,485</div>
+      <div class="index-change up" id="stChange">▲ +0.31%</div>
     </div>
   </div>
 
@@ -650,17 +660,39 @@
 const FINNHUB_KEY = 'd7tjpi9r01qlbd3ken3gd7tjpi9r01qlbd3ken40';
 
 // Fullständiga S&P 500 topp 50 + alla 30 Dow Jones-aktier
+// Alla S&P 500 aktier
 const SP500_SAMPLE = [
-  'AAPL','MSFT','NVDA','GOOGL','AMZN','META','TSLA','AVGO','JPM','LLY',
-  'V','UNH','XOM','MA','JNJ','PG','COST','HD','ABBV','CRM',
-  'MRK','CVX','NFLX','AMD','PEP','TMO','ACN','LIN','ADBE','CSCO',
-  'WMT','BAC','COP','ABT','TXN','PM','NKE','ORCL','RTX','QCOM',
-  'HON','AMGN','UPS','CAT','GE','SPGI','BLK','INTU','AXP','DE'
+  'MMM','AOS','ABT','ABBV','ACN','ADBE','AMD','AES','AFL','A','APD','ABNB','AKAM','ALB','ARE','ALGN','ALLE','LNT','ALL','GOOGL','GOOG','MO','AMZN','AMCR','AEE','AAL','AEP','AXP','AIG','AMT','AWK','AMP','AME','AMGN','APH','ADI','ANSS','AON','APA','AAPL','AMAT','APTV','ACGL','ADM','ANET','AJG','AIZ','T','ATO','ADSK','ADP','AZO','AVB','AVY','AXON','BKR','BALL','BAC','BK','BBWI','BAX','BDX','WRB','BBY','BIO','TECH','BIIB','BLK','BX','BA','BCR','BMY','AVGO','BR','BRO','BF.B','BLDR','BG','CDNS','CZR','CPT','CPB','COF','CAH','KMX','CCL','CARR','CTLT','CAT','CBOE','CBRE','CDW','CE','COR','CNC','CNP','CF','CHRW','CRL','SCHW','CHTR','CVX','CMG','CB','CHD','CI','CINF','CTAS','CSCO','C','CFG','CLX','CME','CMS','KO','CTSH','CL','CMCSA','CMA','CAG','COP','ED','STZ','CEG','COO','CPRT','GLW','CPAY','CTVA','CSGP','COST','CTRA','CCI','CSX','CMI','CVS','DHI','DHR','DRI','DVA','DAY','DECK','DE','DAL','DVN','DXCM','FANG','DLR','DFS','DG','DLTR','D','DPZ','DOV','DOW','DHC','DTE','DUK','DD','EMN','ETN','EBAY','ECL','EIX','EW','EA','ELV','LLY','EMR','ENPH','ETR','EOG','EPAM','EQT','EFX','EQIX','EQR','ESS','EL','ETSY','EG','EVRST','ES','EXC','EXPE','EXPD','EXR','XOM','FFIV','FDS','FICO','FAST','FRT','FDX','FIS','FITB','FSLR','FE','FI','FMC','F','FTNT','FTV','FOXA','FOX','BEN','FCX','GRMN','IT','GE','GEHC','GEV','GEN','GNRC','GD','GIS','GM','GPC','GILD','GS','HAL','HIG','HAS','HCA','DOC','HSIC','HSY','HES','HPE','HLT','HOLX','HD','HON','HRL','HST','HWM','HPQ','HUBB','HUM','HBAN','HII','IBM','IEX','IDXX','ITW','INCY','IR','PODD','INTC','ICE','IFF','IP','IPG','INTU','ISRG','IVZ','INVH','IQV','IRM','JBAL','JKHY','J','JBL','JNPR','JPM','JNJ','JCI','AJG','JNPR','K','KVUE','KDP','KEY','KEYS','KMB','KIM','KMI','KLAC','KHC','KR','LHX','LH','LRCX','LW','LVS','LDOS','LEN','LKQ','LLY','LMT','L','LOW','LULU','LYB','MTB','MRO','MPC','MKTX','MAR','MMC','MLM','MAS','MA','MTCH','MKC','MCD','MCK','MDT','MRK','META','MET','MTD','MGM','MCHP','MU','MSFT','MAA','MRNA','MHK','MOH','TAP','MDLZ','MPWR','MNST','MCO','MS','MOS','MSI','MSCI','NDAQ','NTAP','NFLX','NEM','NWSA','NWS','NEE','NKE','NI','NDSN','NSC','NTRS','NOC','NCLH','NRG','NUE','NVDA','NVR','NXPI','ORLY','OXY','ODFL','OMC','ON','OKE','ORCL','OTIS','PCAR','PKG','PANW','PH','PAYX','PAYC','PYPL','PNR','PEP','PFE','PCG','PM','PSX','PNW','PXD','PNC','POOL','PPG','PPL','PFG','PG','PGR','PRU','PEG','PTC','PSA','PHM','QRVO','PWR','QCOM','DGX','RL','RJF','RTX','O','REG','REGN','RF','RSG','RMD','RVTY','ROK','ROL','ROP','ROST','RCL','SPGI','CRM','SBAC','SLB','STX','SRE','NOW','SHW','SPG','SWKS','SJM','SNA','SOLV','SO','LUV','SWK','SBUX','STT','STLD','STE','SYK','SMCI','SYF','SNPS','SYY','TMUS','TROW','TTWO','TPR','TRGP','TGT','TEL','TDY','TFX','TER','TSLA','TXN','TXT','TMO','TJX','TSCO','TT','TDG','TRV','TRMB','TFC','TYL','TSN','USB','UBER','UDR','ULTA','UNP','UAL','UPS','URI','UNH','UHS','VLO','VTR','VRSN','VRSK','VZ','VRTX','VLTO','V','VST','VNO','VMC','WRB','GWW','WAB','WBA','WMT','DIS','WBD','WM','WAT','WEC','WFC','WELL','WST','WDC','WRK','WY','WHR','WMB','WTW','WYNN','XEL','XYL','YUM','ZBRA','ZBH','ZTS'
 ];
 const DOW_TICKERS = [
   'AAPL','MSFT','UNH','GS','HD','MCD','CAT','V','AMGN','TRV',
   'AXP','HON','JPM','IBM','BA','MMM','DIS','JNJ','CVX','MRK',
   'WMT','NKE','PG','CRM','CSCO','INTC','VZ','KO','DOW','WBA'
+];
+
+// Stockholmsbörsen Large Cap + Mid Cap
+const STOCKHOLM_TICKERS = [
+  // Large Cap
+  'ERIC-B.ST','VOLV-B.ST','SAND.ST','SEB-A.ST','SWED-A.ST','HM-B.ST',
+  'ATCO-A.ST','ATCO-B.ST','SCA-B.ST','SKF-B.ST','SSAB-A.ST','SSAB-B.ST',
+  'INVE-A.ST','INVE-B.ST','NDA-SE.ST','ALFA.ST','ALIV-SDB.ST','ASSA-B.ST',
+  'AZN.ST','BOLS.ST','BOL.ST','CAST.ST','CLAS-B.ST','EKTA-B.ST',
+  'EPI-A.ST','ESSITY-B.ST','FABG.ST','GETI-B.ST','HEXA-B.ST','HUSQ-B.ST',
+  'INDU-A.ST','KINV-B.ST','LATO-B.ST','LIFCO-B.ST','LOOMIS.ST','LUNDBERGF.ST',
+  'NIBE-B.ST','NOKI-FI.ST','PEAB-B.ST','SAGA-B.ST','SAAB-B.ST','SECU-B.ST',
+  'SKA-B.ST','SOBI.ST','SWMA.ST','TELE2-B.ST','TELIA.ST','THULE.ST',
+  'TOBII.ST','TREL-B.ST','VNE.ST','WALL-B.ST','WIHL.ST','XANO-B.ST',
+  // Mid Cap
+  'AAK.ST','ADDV-B.ST','ALIG.ST','AMBEA.ST','ANOT.ST','AXFO.ST',
+  'BEIA-B.ST','BERG-B.ST','BILI-A.ST','BIOG-B.ST','BOOZT.ST','BUFAB.ST',
+  'BULL.ST','CATE.ST','COLL.ST','DIOS.ST','DUNI.ST','ELUX-B.ST',
+  'ENEA.ST','EPRO-B.ST','FAGC.ST','FASTG.ST','FPAR-A.ST','HANZA.ST',
+  'HEMS.ST','HEXP.ST','HUFV-A.ST','IAR-B.ST','IFS.ST','IPCO.ST',
+  'JM.ST','KLOV-B.ST','KNOW-B.ST','LUND-B.ST','MIPS.ST','MOMENT.ST',
+  'NOLA-B.ST','NOTE.ST','NYFOSA.ST','OEM-B.ST','ONCO.ST','OPCO.ST',
+  'PNDX-B.ST','RATO-B.ST','RECI-B.ST','RESURS.ST','RROS.ST','SAVO.ST',
+  'SFAB.ST','SGRO.ST','SHOT.ST','SINCH.ST','SWECO-B.ST','SYSR.ST',
+  'TROAX.ST','VBG-B.ST','VITR.ST','VOLCAR-B.ST','XVIVO.ST','ZOUND.ST'
 ];
 
 let autoTimer = null;
@@ -807,7 +839,8 @@ async function runScan() {
 
   const all = [
     ...SP500_SAMPLE.map(t => ({ticker: t, index: 'S&P 500', badge: 'badge-sp'})),
-    ...DOW_TICKERS.filter(t => !SP500_SAMPLE.includes(t)).map(t => ({ticker: t, index: 'DOW', badge: 'badge-dj'}))
+    ...DOW_TICKERS.filter(t => !SP500_SAMPLE.includes(t)).map(t => ({ticker: t, index: 'DOW', badge: 'badge-dj'})),
+    ...STOCKHOLM_TICKERS.map(t => ({ticker: t, index: 'STOCKHOLM', badge: 'badge-st'}))
   ];
 
   scanResults = [];
@@ -831,7 +864,7 @@ async function runScan() {
 
   let scanned = 0;
   for (const stock of all) {
-    await delay(220);
+    await delay(1100); // 1.1 sekund per anrop = max ~54 anrop/min, säkert under Finnhubs gräns
     const result = await analyzeStock(stock.ticker, stock.index, stock.badge, days, volFactor);
     if (result) scanResults.push(result);
     scanned++;
