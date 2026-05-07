@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_2.html -->
+<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_3.html -->
 <html lang="sv"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -645,6 +645,10 @@
       </div>
     </div>
 
+    <button onclick="debugAMD()" style="width:100%; padding:10px; margin-bottom:8px; background:transparent; border:1px solid var(--accent2); border-radius:10px; color:var(--accent2); font-family:&#39;Space Mono&#39;,monospace; font-size:11px; cursor:pointer;">
+      🔍 DEBUGGA AMD
+    </button>
+
     <button class="scan-btn" id="scanBtn" onclick="runScan()">
       <span>▶ Kör skanning</span>
     </button>
@@ -1247,6 +1251,62 @@ function toggleChart(i) {
       }
     }
   });
+}
+
+// ==========================================
+// DEBUG FUNCTION
+// ==========================================
+async function debugAMD() {
+  const banner = document.getElementById('apiBanner');
+  banner.style.cssText = 'display:flex; border-radius:10px; padding:12px 14px; margin-bottom:16px; align-items:center; gap:10px; font-size:11px; line-height:1.6; background:rgba(0,229,255,0.06); border:1px solid rgba(0,229,255,0.25); color:var(--accent); flex-direction:column;';
+  banner.textContent = '🔍 Hämtar AMD-data från Finnhub...';
+
+  const days = 100;
+  const to   = Math.floor(Date.now() / 1000);
+  const from = to - (days + 60) * 24 * 3600;
+
+  const finnhubUrl = `https://finnhub.io/api/v1/stock/candle?symbol=AMD&resolution=D&from=${from}&to=${to}&token=${FINNHUB_KEY}`;
+  const url = `https://corsproxy.io/?${encodeURIComponent(finnhubUrl)}`;
+
+  try {
+    const resp = await fetch(url);
+    const json = await resp.json();
+
+    if (json.s !== 'ok') {
+      banner.textContent = `❌ Finnhub svarade: ${json.s} — API-problem`;
+      return;
+    }
+
+    const closes     = json.c;
+    const highs      = json.h;
+    const volumes    = json.v;
+    const timestamps = json.t;
+    const n = closes.length;
+
+    const todayClose     = closes[n - 1];
+    const todayTimestamp = timestamps[n - 1];
+    const todayDate      = new Date(todayTimestamp * 1000).toLocaleDateString('sv-SE');
+
+    const lookbackCloses = closes.slice(-(days + 1), -1);
+    const high100        = Math.max(...lookbackCloses);
+    const isBreakout     = todayClose > high100;
+
+    const last20vols = volumes.slice(-21, -1);
+    const avgVol     = last20vols.reduce((s, v) => s + v, 0) / last20vols.length;
+    const volRatio   = (volumes[n-1] / avgVol).toFixed(2);
+
+    banner.innerHTML = `
+      <div style="font-weight:700;color:var(--accent);margin-bottom:4px;">🔍 AMD Debug</div>
+      <div>📅 Senaste data: <b>${todayDate}</b></div>
+      <div>💰 Stängningspris: <b>$${todayClose.toFixed(2)}</b></div>
+      <div>📈 ${days}-dagars högsta (close): <b>$${high100.toFixed(2)}</b></div>
+      <div>🚨 Bryter högsta? <b style="color:${isBreakout ? 'var(--green)' : 'var(--red)'}">${isBreakout ? 'JA ✅' : 'NEJ ❌'}</b></div>
+      <div>📊 Volymfaktor idag: <b>${volRatio}×</b> (behöver ≥ 1.5×)</div>
+      <div>📦 Antal datapunkter: <b>${n} dagar</b></div>
+    `;
+  } catch(err) {
+    banner.textContent = `❌ Fel: ${err.message}`;
+  }
 }
 
 // ==========================================
