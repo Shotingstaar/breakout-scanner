@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_1.html -->
+<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_2.html -->
 <html lang="sv"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -540,8 +540,8 @@
   <div class="header">
     <div class="logo">BREAK<span>OUT</span></div>
     <div class="market-status">
-      <div id="statusDot" class="status-dot"></div>
-      <span id="statusText" style="color: var(--green);">Börsen öppen</span>
+      <div id="statusDot" class="status-dot inactive"></div>
+      <span id="statusText">Börsen stängd</span>
     </div>
   </div>
 
@@ -555,29 +555,39 @@
   <!-- Index cards -->
   <div class="indices">
     <div class="index-card sp">
-      <div class="index-name">S&amp;P 500</div>
-      <div class="index-value" id="spValue">5,646</div>
-      <div class="index-change up" id="spChange">▲ +0.82%</div>
+      <div class="index-name">S&amp;P 500 <span style="font-size:8px;color:var(--muted);">via SPY ETF</span></div>
+      <div class="index-value" id="spValue">5&nbsp;648</div>
+      <div class="index-change" id="spChange" style="color:var(--muted);">Hämtar...</div>
     </div>
     <div class="index-card dj">
-      <div class="index-name">DOW JONES</div>
-      <div class="index-value" id="djValue">42,120</div>
-      <div class="index-change up" id="djChange">▲ +0.54%</div>
+      <div class="index-name">DOW JONES <span style="font-size:8px;color:var(--muted);">via DIA ETF</span></div>
+      <div class="index-value" id="djValue">42&nbsp;114</div>
+      <div class="index-change" id="djChange" style="color:var(--muted);">Hämtar...</div>
     </div>
   </div>
 
   <!-- Stockholm index card -->
   <div style="margin-bottom:20px;">
     <div class="index-card" style="border-top:2px solid #00ccff;">
-      <div class="index-name">STOCKHOLM (OMXS30)</div>
-      <div class="index-value" id="stValue">2,485</div>
-      <div class="index-change up" id="stChange">▲ +0.31%</div>
+      <div class="index-name">STOCKHOLM <span style="font-size:8px;color:var(--muted);">via EWD ETF</span></div>
+      <div class="index-value" id="stValue">—</div>
+      <div class="index-change" id="stChange" style="color:var(--muted);">Hämtar...</div>
     </div>
   </div>
 
   <!-- Controls -->
   <div class="controls">
     <div class="controls-title">⚙ Skannerinställningar</div>
+
+    <!-- Scan mode tabs -->
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <button id="tab-breakout" onclick="setMode(&#39;breakout&#39;)" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:var(--bg); font-family:&#39;Space Mono&#39;,monospace; font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer;">
+        🚨 BREAKOUT
+      </button>
+      <button id="tab-consol" onclick="setMode(&#39;consol&#39;)" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:&#39;Space Mono&#39;,monospace; font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer;">
+        📦 KONSOLIDERING
+      </button>
+    </div>
 
     <div class="control-row">
       <div>
@@ -615,6 +625,24 @@
         <input type="checkbox" id="pushToggle" onchange="togglePush()">
         <div class="toggle-track"></div>
       </label>
+    </div>
+
+    <!-- Consolidation settings (hidden by default) -->
+    <div id="consolSettings" style="display:none; border-top:1px solid var(--border); padding-top:14px; margin-top:4px;">
+      <div class="control-row">
+        <div>
+          <div class="control-label">Konsolideringsdagar</div>
+          <div class="control-sub">Antal dagar sidledes</div>
+        </div>
+        <input type="number" id="consolDays" value="20" min="5" max="60">
+      </div>
+      <div class="control-row">
+        <div>
+          <div class="control-label">Max intervall</div>
+          <div class="control-sub">% mellan topp och botten</div>
+        </div>
+        <input type="number" id="consolRange" value="10" min="3" max="25" step="0.5">
+      </div>
     </div>
 
     <button class="scan-btn" id="scanBtn" onclick="runScan()">
@@ -656,6 +684,34 @@
 // ==========================================
 // CONFIG
 // ==========================================
+let scanMode = 'breakout'; // 'breakout' eller 'consol'
+
+function setMode(mode) {
+  scanMode = mode;
+  const breakoutBtn = document.getElementById('tab-breakout');
+  const consolBtn   = document.getElementById('tab-consol');
+  const consolSettings = document.getElementById('consolSettings');
+  const breakoutSettings = document.querySelectorAll('.breakout-only');
+
+  if (mode === 'breakout') {
+    breakoutBtn.style.background = 'var(--accent)';
+    breakoutBtn.style.color = 'var(--bg)';
+    breakoutBtn.style.borderColor = 'var(--accent)';
+    consolBtn.style.background = 'transparent';
+    consolBtn.style.color = 'var(--muted)';
+    consolBtn.style.borderColor = 'var(--border)';
+    consolSettings.style.display = 'none';
+  } else {
+    consolBtn.style.background = 'var(--green)';
+    consolBtn.style.color = 'var(--bg)';
+    consolBtn.style.borderColor = 'var(--green)';
+    breakoutBtn.style.background = 'transparent';
+    breakoutBtn.style.color = 'var(--muted)';
+    breakoutBtn.style.borderColor = 'var(--border)';
+    consolSettings.style.display = 'block';
+  }
+}
+
 // Finnhub API-nyckel — byt ut mot din nyckel från finnhub.io
 const FINNHUB_KEY = 'd7tjpi9r01qlbd3ken3gd7tjpi9r01qlbd3ken40';
 
@@ -862,10 +918,18 @@ async function runScan() {
     return;
   }
 
+  const consolDays  = parseInt(document.getElementById('consolDays').value) || 20;
+  const consolRange = parseFloat(document.getElementById('consolRange').value) || 10;
+
   let scanned = 0;
   for (const stock of all) {
-    await delay(1100); // 1.1 sekund per anrop = max ~54 anrop/min, säkert under Finnhubs gräns
-    const result = await analyzeStock(stock.ticker, stock.index, stock.badge, days, volFactor);
+    await delay(1100);
+    let result = null;
+    if (scanMode === 'breakout') {
+      result = await analyzeStock(stock.ticker, stock.index, stock.badge, days, volFactor);
+    } else {
+      result = await analyzeConsolidation(stock.ticker, stock.index, stock.badge, consolDays, consolRange, volFactor);
+    }
     if (result) scanResults.push(result);
     scanned++;
     const pct = Math.round((scanned / all.length) * 100);
@@ -930,7 +994,7 @@ function showApiBanner(type, msg) {
 async function analyzeStock(ticker, index, badge, days, volFactor) {
   try {
     const to   = Math.floor(Date.now() / 1000);
-    const from = to - (days + 30) * 24 * 3600;
+    const from = to - (days + 60) * 24 * 3600; // extra marginal för helger och helgdagar
 
     // Använder CORS-proxy för att undvika blockering från GitHub Pages
     const finnhubUrl = `https://finnhub.io/api/v1/stock/candle?symbol=${ticker}&resolution=D&from=${from}&to=${to}&token=${FINNHUB_KEY}`;
@@ -960,8 +1024,10 @@ async function analyzeStock(ticker, index, badge, days, volFactor) {
     const dateStr  = dataDate.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
     const isOld    = diffDays > 3;
 
-    const lookbackHighs = highs.slice(-(days + 1), -1);
-    const high100 = Math.max(...lookbackHighs);
+    // Jämför stängningspris mot tidigare stängningspriser (inte high)
+    // Detta fångar breakouts som AMD igår där close > alla tidigare closes
+    const lookbackCloses = closes.slice(-(days + 1), -1);
+    const high100 = Math.max(...lookbackCloses);
 
     const last20vols = volumes.slice(-21, -1);
     const avgVol = last20vols.reduce((s, v) => s + v, 0) / last20vols.length;
@@ -1029,9 +1095,9 @@ function renderResults(results) {
 
       ${r.isOld ? `<div style="background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:6px;padding:7px 10px;margin-bottom:8px;font-size:10px;color:#ff6b35;">⚠️ Gammal data — breakout skedde ${r.dateStr} (${r.diffDays} dagar sedan)</div>` : ''}
 
-      <div class="signal-bar">
-        <span class="signal-icon">🚨</span>
-        <span class="signal-text">${r.days}-DAGARS BREAKOUT</span>
+      <div class="signal-bar" style="${r.isConsol ? 'background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);' : ''}">
+        <span class="signal-icon">${r.isConsol ? '📦' : '🚨'}</span>
+        <span class="signal-text" style="${r.isConsol ? 'color:var(--green);' : ''}">${r.isConsol ? r.consolDays+'-DAG KONSOLIDERINGS-BREAKOUT ('+r.rangePercent+'% intervall)' : r.days+'-DAGARS BREAKOUT'}</span>
         <span class="signal-sub">${r.dateStr} · +${(r.volRatio).toFixed(1)}× vol</span>
       </div>
 
@@ -1184,18 +1250,123 @@ function toggleChart(i) {
 }
 
 // ==========================================
-// INDEX DATA (Demo)
+// CONSOLIDATION ANALYSIS
+// Letar efter aktier som gått sidledes och sedan brutit upp
 // ==========================================
-function updateIndexData() {
-  // Live: fetch from Alpha Vantage / Yahoo Finance
-  // Demo: small random drift
-  let sp = 5648, dj = 42114;
-  setInterval(() => {
-    sp += (Math.random() - 0.5) * 4;
-    dj += (Math.random() - 0.5) * 20;
-    document.getElementById('spValue').textContent = sp.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    document.getElementById('djValue').textContent = dj.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  }, 5000);
+async function analyzeConsolidation(ticker, index, badge, consolDays, consolRange, volFactor) {
+  try {
+    const to   = Math.floor(Date.now() / 1000);
+    const from = to - (consolDays + 60) * 24 * 3600;
+
+    const finnhubUrl = `https://finnhub.io/api/v1/stock/candle?symbol=${ticker}&resolution=D&from=${from}&to=${to}&token=${FINNHUB_KEY}`;
+    const url = `https://corsproxy.io/?${encodeURIComponent(finnhubUrl)}`;
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const json = await resp.json();
+
+    if (json.s !== 'ok' || !json.c || json.c.length < consolDays + 5) return null;
+
+    const closes     = json.c;
+    const volumes    = json.v;
+    const timestamps = json.t;
+    const n = closes.length;
+
+    // Dagens data
+    const todayClose     = closes[n - 1];
+    const todayVol       = volumes[n - 1];
+    const todayTimestamp = timestamps[n - 1];
+    const prevClose      = closes[n - 2];
+    const changePct      = ((todayClose - prevClose) / prevClose * 100);
+
+    // Konsolideringsperioden = dagarna FÖRE idag
+    const consolCloses  = closes.slice(-(consolDays + 1), -1);
+    const consolVolumes = volumes.slice(-(consolDays + 1), -1);
+
+    const consolHigh = Math.max(...consolCloses);
+    const consolLow  = Math.min(...consolCloses);
+    const rangePercent = ((consolHigh - consolLow) / consolLow) * 100;
+
+    // Villkor 1: Priset har rört sig inom ett smalt intervall (konsolidering)
+    if (rangePercent > consolRange) return null;
+
+    // Villkor 2: Dagens stängning bryter ÖVER konsolideringszonens tak
+    if (todayClose <= consolHigh) return null;
+
+    // Villkor 3: Volymen är högre än normalt
+    const avgVol = consolVolumes.reduce((s, v) => s + v, 0) / consolVolumes.length;
+    if (todayVol < avgVol * volFactor) return null;
+
+    // Datumkontroll
+    const dataDate = new Date(todayTimestamp * 1000);
+    const now      = new Date();
+    const diffDays = Math.floor((now - dataDate) / (1000 * 3600 * 24));
+    const dateStr  = dataDate.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+    const isOld    = diffDays > 3;
+
+    // Prishistorik för graf
+    const priceHistory = consolCloses.map(c => +c.toFixed(2));
+    priceHistory.push(+todayClose.toFixed(2));
+
+    return {
+      ticker, index, badge,
+      price:       todayClose.toFixed(2),
+      high100:     consolHigh.toFixed(2), // konsolideringens tak
+      change:      changePct.toFixed(2),
+      avgVol,
+      todayVol,
+      volRatio:    todayVol / avgVol,
+      rangePercent: rangePercent.toFixed(1),
+      consolDays,
+      priceHistory,
+      days: consolDays,
+      dateStr,
+      diffDays,
+      isOld,
+      isConsol: true // flagga för renderingen
+    };
+
+  } catch (err) {
+    console.warn(`Konsolideringsfel för ${ticker}:`, err);
+    return null;
+  }
+}
+
+// ==========================================
+// INDEX DATA — Finnhub live
+// ==========================================
+async function updateIndexData() {
+  // S&P 500 ETF (SPY), Dow Jones ETF (DIA), OMX Stockholm 30 ETF (XACT OMXS30 på Stockholmsbörsen)
+  const indices = [
+    { symbol: 'SPY', valueId: 'spValue', changeId: 'spChange' },
+    { symbol: 'DIA', valueId: 'djValue', changeId: 'djChange' },
+    { symbol: 'EWD', valueId: 'stValue', changeId: 'stChange' }
+  ];
+
+  for (const idx of indices) {
+    try {
+      const url = `https://finnhub.io/api/v1/quote?symbol=${idx.symbol}&token=${FINNHUB_KEY}`;
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+      const resp = await fetch(proxyUrl);
+      if (!resp.ok) continue;
+      const data = await resp.json();
+
+      if (!data.c) continue;
+
+      // Visa ETF-priset direkt utan multiplikator
+      const price  = data.c.toFixed(2);
+      const change = data.dp ? data.dp.toFixed(2) : '0.00';
+      const isUp   = parseFloat(change) >= 0;
+
+      document.getElementById(idx.valueId).textContent = '$' + parseFloat(price).toLocaleString('sv-SE');
+      const changeEl = document.getElementById(idx.changeId);
+      changeEl.textContent = `${isUp ? '▲' : '▼'} ${isUp ? '+' : ''}${change}%`;
+      changeEl.className = `index-change ${isUp ? 'up' : 'down'}`;
+    } catch(e) {
+      document.getElementById(idx.valueId).textContent = '—';
+      document.getElementById(idx.changeId).textContent = 'Ej tillgänglig';
+      console.warn('Index fetch failed for', idx.symbol, e);
+    }
+  }
 }
 
 function updateLastScan() {
