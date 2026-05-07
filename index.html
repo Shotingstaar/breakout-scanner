@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_5.html -->
+<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_6.html -->
 <html lang="sv"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -557,12 +557,12 @@
     <div class="index-card sp">
       <div class="index-name">S&amp;P 500 <span style="font-size:8px;color:var(--muted);">via SPY ETF</span></div>
       <div class="index-value" id="spValue">5&nbsp;648</div>
-      <div class="index-change down" id="spChange" style="color:var(--muted);">▼ -0.27%</div>
+      <div class="index-change down" id="spChange" style="color:var(--muted);">▼ -0.33%</div>
     </div>
     <div class="index-card dj">
       <div class="index-name">DOW JONES <span style="font-size:8px;color:var(--muted);">via DIA ETF</span></div>
-      <div class="index-value" id="djValue">$496,57</div>
-      <div class="index-change down" id="djChange" style="color:var(--muted);">▼ -0.50%</div>
+      <div class="index-value" id="djValue">42&nbsp;114</div>
+      <div class="index-change down" id="djChange" style="color:var(--muted);">▼ -0.54%</div>
     </div>
   </div>
 
@@ -570,8 +570,8 @@
   <div style="margin-bottom:20px;">
     <div class="index-card" style="border-top:2px solid #00ccff;">
       <div class="index-name">STOCKHOLM <span style="font-size:8px;color:var(--muted);">via EWD ETF</span></div>
-      <div class="index-value" id="stValue">$51,56</div>
-      <div class="index-change down" id="stChange" style="color:var(--muted);">▼ -2.01%</div>
+      <div class="index-value" id="stValue">$51,53</div>
+      <div class="index-change down" id="stChange" style="color:var(--muted);">▼ -2.07%</div>
     </div>
   </div>
 
@@ -1270,7 +1270,7 @@ async function debugAMD() {
     const json = await resp.json();
 
     if (json.s !== 'ok') {
-      banner.textContent = `❌ Finnhub svarade: ${json.s} — API-problem`;
+      banner.innerHTML = `❌ Finnhub svarade: <b>${json.s}</b><br>Rådata: ${JSON.stringify(json).substring(0,200)}`;
       return;
     }
 
