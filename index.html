@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_7.html -->
+<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_8.html -->
 <html lang="sv"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -557,12 +557,12 @@
     <div class="index-card sp">
       <div class="index-name">S&amp;P 500 <span style="font-size:8px;color:var(--muted);">via SPY ETF</span></div>
       <div class="index-value" id="spValue">5&nbsp;648</div>
-      <div class="index-change down" id="spChange" style="color:var(--muted);">▼ -0.31%</div>
+      <div class="index-change up" id="spChange" style="color:var(--muted);">▲ +0.51%</div>
     </div>
     <div class="index-card dj">
       <div class="index-name">DOW JONES <span style="font-size:8px;color:var(--muted);">via DIA ETF</span></div>
       <div class="index-value" id="djValue">42&nbsp;114</div>
-      <div class="index-change down" id="djChange" style="color:var(--muted);">▼ -0.63%</div>
+      <div class="index-change up" id="djChange" style="color:var(--muted);">▲ +0.32%</div>
     </div>
   </div>
 
@@ -570,8 +570,8 @@
   <div style="margin-bottom:20px;">
     <div class="index-card" style="border-top:2px solid #00ccff;">
       <div class="index-name">STOCKHOLM <span style="font-size:8px;color:var(--muted);">via EWD ETF</span></div>
-      <div class="index-value" id="stValue">$51,2</div>
-      <div class="index-change down" id="stChange" style="color:var(--muted);">▼ -2.70%</div>
+      <div class="index-value" id="stValue">$51,55</div>
+      <div class="index-change up" id="stChange" style="color:var(--muted);">▲ +0.68%</div>
     </div>
   </div>
 
@@ -997,7 +997,7 @@ function showApiBanner(type, msg) {
 // ==========================================
 async function analyzeStock(ticker, index, badge, days, volFactor) {
   try {
-    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=full&apikey=${AV_KEY}`;
+    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=compact&apikey=${AV_KEY}`;
     const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
@@ -1266,7 +1266,7 @@ async function debugAMD() {
   const to   = Math.floor(Date.now() / 1000);
   const from = to - (days + 60) * 24 * 3600;
 
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=AMD&outputsize=full&apikey=${AV_KEY}`;
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=AMD&outputsize=compact&apikey=${AV_KEY}`;
 
   try {
     const resp = await fetch(url);
@@ -1320,7 +1320,7 @@ async function analyzeConsolidation(ticker, index, badge, consolDays, consolRang
     const to   = Math.floor(Date.now() / 1000);
     const from = to - (consolDays + 60) * 24 * 3600;
 
-    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=full&apikey=${AV_KEY}`;
+    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=compact&apikey=${AV_KEY}`;
     const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
