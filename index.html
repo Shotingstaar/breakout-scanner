@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_6.html -->
+<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_7.html -->
 <html lang="sv"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -540,8 +540,8 @@
   <div class="header">
     <div class="logo">BREAK<span>OUT</span></div>
     <div class="market-status">
-      <div id="statusDot" class="status-dot"></div>
-      <span id="statusText" style="color: var(--green);">Börsen öppen</span>
+      <div id="statusDot" class="status-dot inactive"></div>
+      <span id="statusText">Börsen stängd</span>
     </div>
   </div>
 
@@ -557,12 +557,12 @@
     <div class="index-card sp">
       <div class="index-name">S&amp;P 500 <span style="font-size:8px;color:var(--muted);">via SPY ETF</span></div>
       <div class="index-value" id="spValue">5&nbsp;648</div>
-      <div class="index-change down" id="spChange" style="color:var(--muted);">▼ -0.33%</div>
+      <div class="index-change down" id="spChange" style="color:var(--muted);">▼ -0.31%</div>
     </div>
     <div class="index-card dj">
       <div class="index-name">DOW JONES <span style="font-size:8px;color:var(--muted);">via DIA ETF</span></div>
       <div class="index-value" id="djValue">42&nbsp;114</div>
-      <div class="index-change down" id="djChange" style="color:var(--muted);">▼ -0.54%</div>
+      <div class="index-change down" id="djChange" style="color:var(--muted);">▼ -0.63%</div>
     </div>
   </div>
 
@@ -570,8 +570,8 @@
   <div style="margin-bottom:20px;">
     <div class="index-card" style="border-top:2px solid #00ccff;">
       <div class="index-name">STOCKHOLM <span style="font-size:8px;color:var(--muted);">via EWD ETF</span></div>
-      <div class="index-value" id="stValue">$51,53</div>
-      <div class="index-change down" id="stChange" style="color:var(--muted);">▼ -2.07%</div>
+      <div class="index-value" id="stValue">$51,2</div>
+      <div class="index-change down" id="stChange" style="color:var(--muted);">▼ -2.70%</div>
     </div>
   </div>
 
@@ -718,6 +718,7 @@ function setMode(mode) {
 
 // Finnhub API-nyckel — byt ut mot din nyckel från finnhub.io
 const FINNHUB_KEY = 'd7tjpi9r01qlbd3ken3gd7tjpi9r01qlbd3ken40';
+const AV_KEY = '167GTHCND9Z4LZY2'; // Alpha Vantage — historisk data
 
 // Fullständiga S&P 500 topp 50 + alla 30 Dow Jones-aktier
 // Alla S&P 500 aktier
@@ -927,7 +928,7 @@ async function runScan() {
 
   let scanned = 0;
   for (const stock of all) {
-    await delay(1100);
+    await delay(12500); // Alpha Vantage: max 5 anrop/min
     let result = null;
     if (scanMode === 'breakout') {
       result = await analyzeStock(stock.ticker, stock.index, stock.badge, days, volFactor);
@@ -992,25 +993,27 @@ function showApiBanner(type, msg) {
 }
 
 // ==========================================
-// STOCK ANALYSIS — Finnhub API (ingen Content-Type header = ingen CORS-blockering)
+// STOCK ANALYSIS — Alpha Vantage API (historisk data, fungerar från webbläsaren)
 // ==========================================
 async function analyzeStock(ticker, index, badge, days, volFactor) {
   try {
-    const to   = Math.floor(Date.now() / 1000);
-    const from = to - (days + 60) * 24 * 3600; // extra marginal för helger och helgdagar
-
-    // Använder CORS-proxy för att undvika blockering från GitHub Pages
-    const url = `https://finnhub.io/api/v1/stock/candle?symbol=${ticker}&resolution=D&from=${from}&to=${to}&token=${FINNHUB_KEY}`;
-    const resp = await fetch(url, {mode: 'cors'});
+    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=full&apikey=${AV_KEY}`;
+    const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
 
-    if (json.s !== 'ok' || !json.c || json.c.length < days + 1) return null;
+    const series = json['Time Series (Daily)'];
+    if (!series) return null;
 
-    const closes     = json.c;
-    const highs      = json.h;
-    const volumes    = json.v;
-    const timestamps = json.t;
+    // Sortera datum nyast först
+    const entries = Object.entries(series).sort((a, b) => new Date(b[0]) - new Date(a[0]));
+    if (entries.length < days + 1) return null;
+
+    // Bygg arrays (index 0 = idag, 1 = igår osv)
+    const closes     = entries.map(e => parseFloat(e[1]['4. close']));
+    const highs      = entries.map(e => parseFloat(e[1]['2. high']));
+    const volumes    = entries.map(e => parseFloat(e[1]['5. volume']));
+    const timestamps = entries.map(e => new Date(e[0]).getTime() / 1000);
     const n = closes.length;
 
     const todayClose     = closes[n - 1];
@@ -1263,21 +1266,23 @@ async function debugAMD() {
   const to   = Math.floor(Date.now() / 1000);
   const from = to - (days + 60) * 24 * 3600;
 
-  const url = `https://finnhub.io/api/v1/stock/candle?symbol=AMD&resolution=D&from=${from}&to=${to}&token=${FINNHUB_KEY}`;
+  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=AMD&outputsize=full&apikey=${AV_KEY}`;
 
   try {
-    const resp = await fetch(url, {mode: 'cors'});
+    const resp = await fetch(url);
     const json = await resp.json();
 
-    if (json.s !== 'ok') {
-      banner.innerHTML = `❌ Finnhub svarade: <b>${json.s}</b><br>Rådata: ${JSON.stringify(json).substring(0,200)}`;
+    const series = json['Time Series (Daily)'];
+    if (!series) {
+      banner.innerHTML = `❌ Alpha Vantage svarade fel<br>Rådata: ${JSON.stringify(json).substring(0,200)}`;
       return;
     }
 
-    const closes     = json.c;
-    const highs      = json.h;
-    const volumes    = json.v;
-    const timestamps = json.t;
+    const entries    = Object.entries(series).sort((a, b) => new Date(b[0]) - new Date(a[0]));
+    const closes     = entries.map(e => parseFloat(e[1]['4. close']));
+    const highs      = entries.map(e => parseFloat(e[1]['2. high']));
+    const volumes    = entries.map(e => parseFloat(e[1]['5. volume']));
+    const timestamps = entries.map(e => new Date(e[0]).getTime() / 1000);
     const n = closes.length;
 
     const todayClose     = closes[n - 1];
@@ -1315,16 +1320,20 @@ async function analyzeConsolidation(ticker, index, badge, consolDays, consolRang
     const to   = Math.floor(Date.now() / 1000);
     const from = to - (consolDays + 60) * 24 * 3600;
 
-    const url = `https://finnhub.io/api/v1/stock/candle?symbol=${ticker}&resolution=D&from=${from}&to=${to}&token=${FINNHUB_KEY}`;
-    const resp = await fetch(url, {mode: 'cors'});
+    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=full&apikey=${AV_KEY}`;
+    const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
 
-    if (json.s !== 'ok' || !json.c || json.c.length < consolDays + 5) return null;
+    const series = json['Time Series (Daily)'];
+    if (!series) return null;
 
-    const closes     = json.c;
-    const volumes    = json.v;
-    const timestamps = json.t;
+    const entries = Object.entries(series).sort((a, b) => new Date(b[0]) - new Date(a[0]));
+    if (entries.length < consolDays + 5) return null;
+
+    const closes     = entries.map(e => parseFloat(e[1]['4. close']));
+    const volumes    = entries.map(e => parseFloat(e[1]['5. volume']));
+    const timestamps = entries.map(e => new Date(e[0]).getTime() / 1000);
     const n = closes.length;
 
     // Dagens data
