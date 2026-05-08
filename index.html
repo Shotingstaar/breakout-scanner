@@ -1005,8 +1005,8 @@ async function analyzeStock(ticker, index, badge, days, volFactor) {
 
     if (json.status === 'error' || !json.values || json.values.length < days + 1) return null;
 
-    // Twelve Data returnerar nyast först
-    const entries = json.values;
+    // Sortera nyast först för säkerhets skull
+    const entries = json.values.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
     const closes     = entries.map(e => parseFloat(e.close));
     const highs      = entries.map(e => parseFloat(e.high));
     const volumes    = entries.map(e => parseFloat(e.volume));
@@ -1274,11 +1274,15 @@ async function debugAMD() {
       return;
     }
 
-    const entries    = json.values;
+    // Sortera alltid nyast först för säkerhets skull
+    const entries    = json.values.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
     const closes     = entries.map(e => parseFloat(e.close));
     const highs      = entries.map(e => parseFloat(e.high));
     const volumes    = entries.map(e => parseFloat(e.volume));
     const timestamps = entries.map(e => new Date(e.datetime).getTime() / 1000);
+    
+    // Extra debug: visa första och sista datum
+    banner.innerHTML += `<br>🗓 Första: ${entries[0].datetime} | Sista: ${entries[entries.length-1].datetime}`;
     const n = closes.length;
 
     const todayClose     = closes[n - 1];
@@ -1323,7 +1327,7 @@ async function analyzeConsolidation(ticker, index, badge, consolDays, consolRang
 
     if (json.status === 'error' || !json.values || json.values.length < consolDays + 5) return null;
 
-    const entries    = json.values;
+    const entries    = json.values.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
     const closes     = entries.map(e => parseFloat(e.close));
     const volumes    = entries.map(e => parseFloat(e.volume));
     const timestamps = entries.map(e => new Date(e.datetime).getTime() / 1000);
