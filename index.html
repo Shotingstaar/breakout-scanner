@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/robba/Downloads/index_8.html -->
-<html lang="sv"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Breakout Scanner</title>
-<script src="./index_files/chart.umd.min.js.ladda ned"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
 
@@ -546,7 +546,7 @@
   </div>
 
   <!-- Notification banner -->
-  <div id="notifBanner" class="notif-banner" style="display: flex;">
+  <div id="notifBanner" class="notif-banner" style="display:none">
     <span>🔔</span>
     <div class="notif-banner-text">Aktivera notiser för att få varningar vid breakout</div>
     <button class="notif-btn" onclick="requestNotifications()">Aktivera</button>
@@ -555,14 +555,14 @@
   <!-- Index cards -->
   <div class="indices">
     <div class="index-card sp">
-      <div class="index-name">S&amp;P 500 <span style="font-size:8px;color:var(--muted);">via SPY ETF</span></div>
-      <div class="index-value" id="spValue">5&nbsp;648</div>
-      <div class="index-change up" id="spChange" style="color:var(--muted);">▲ +0.51%</div>
+      <div class="index-name">S&P 500 <span style="font-size:8px;color:var(--muted);">via SPY ETF</span></div>
+      <div class="index-value" id="spValue">—</div>
+      <div class="index-change" id="spChange" style="color:var(--muted);">Hämtar...</div>
     </div>
     <div class="index-card dj">
       <div class="index-name">DOW JONES <span style="font-size:8px;color:var(--muted);">via DIA ETF</span></div>
-      <div class="index-value" id="djValue">42&nbsp;114</div>
-      <div class="index-change up" id="djChange" style="color:var(--muted);">▲ +0.32%</div>
+      <div class="index-value" id="djValue">—</div>
+      <div class="index-change" id="djChange" style="color:var(--muted);">Hämtar...</div>
     </div>
   </div>
 
@@ -570,8 +570,8 @@
   <div style="margin-bottom:20px;">
     <div class="index-card" style="border-top:2px solid #00ccff;">
       <div class="index-name">STOCKHOLM <span style="font-size:8px;color:var(--muted);">via EWD ETF</span></div>
-      <div class="index-value" id="stValue">$51,55</div>
-      <div class="index-change up" id="stChange" style="color:var(--muted);">▲ +0.68%</div>
+      <div class="index-value" id="stValue">—</div>
+      <div class="index-change" id="stChange" style="color:var(--muted);">Hämtar...</div>
     </div>
   </div>
 
@@ -581,10 +581,10 @@
 
     <!-- Scan mode tabs -->
     <div style="display:flex; gap:8px; margin-bottom:16px;">
-      <button id="tab-breakout" onclick="setMode(&#39;breakout&#39;)" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:var(--bg); font-family:&#39;Space Mono&#39;,monospace; font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer;">
+      <button id="tab-breakout" onclick="setMode('breakout')" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:var(--bg); font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer;">
         🚨 BREAKOUT
       </button>
-      <button id="tab-consol" onclick="setMode(&#39;consol&#39;)" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:&#39;Space Mono&#39;,monospace; font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer;">
+      <button id="tab-consol" onclick="setMode('consol')" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer;">
         📦 KONSOLIDERING
       </button>
     </div>
@@ -611,7 +611,7 @@
         <div class="control-sub">Kör efter börsens stängning</div>
       </div>
       <label class="toggle">
-        <input type="checkbox" id="autoScan" checked="" onchange="toggleAuto()">
+        <input type="checkbox" id="autoScan" checked onchange="toggleAuto()">
         <div class="toggle-track"></div>
       </label>
     </div>
@@ -645,7 +645,7 @@
       </div>
     </div>
 
-    <button onclick="debugAMD()" style="width:100%; padding:10px; margin-bottom:8px; background:transparent; border:1px solid var(--accent2); border-radius:10px; color:var(--accent2); font-family:&#39;Space Mono&#39;,monospace; font-size:11px; cursor:pointer;">
+    <button onclick="debugAMD()" style="width:100%; padding:10px; margin-bottom:8px; background:transparent; border:1px solid var(--accent2); border-radius:10px; color:var(--accent2); font-family:'Space Mono',monospace; font-size:11px; cursor:pointer;">
       🔍 DEBUGGA AMD
     </button>
 
@@ -718,7 +718,7 @@ function setMode(mode) {
 
 // Finnhub API-nyckel — byt ut mot din nyckel från finnhub.io
 const FINNHUB_KEY = 'd7tjpi9r01qlbd3ken3gd7tjpi9r01qlbd3ken40';
-const AV_KEY = '167GTHCND9Z4LZY2'; // Alpha Vantage — historisk data
+const TD_KEY = '7bf959615fe04daa9ee87980fe49e679'; // Twelve Data — historisk data
 
 // Fullständiga S&P 500 topp 50 + alla 30 Dow Jones-aktier
 // Alla S&P 500 aktier
@@ -928,7 +928,7 @@ async function runScan() {
 
   let scanned = 0;
   for (const stock of all) {
-    await delay(12500); // Alpha Vantage: max 5 anrop/min
+    await delay(8000); // Twelve Data: max 8 anrop/min på gratisplan
     let result = null;
     if (scanMode === 'breakout') {
       result = await analyzeStock(stock.ticker, stock.index, stock.badge, days, volFactor);
@@ -997,23 +997,20 @@ function showApiBanner(type, msg) {
 // ==========================================
 async function analyzeStock(ticker, index, badge, days, volFactor) {
   try {
-    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=compact&apikey=${AV_KEY}`;
+    // Twelve Data: hämtar de senaste (days+10) dagarna
+    const url = `https://api.twelvedata.com/time_series?symbol=${ticker}&interval=1day&outputsize=${days + 10}&apikey=${TD_KEY}`;
     const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
 
-    const series = json['Time Series (Daily)'];
-    if (!series) return null;
+    if (json.status === 'error' || !json.values || json.values.length < days + 1) return null;
 
-    // Sortera datum nyast först
-    const entries = Object.entries(series).sort((a, b) => new Date(b[0]) - new Date(a[0]));
-    if (entries.length < days + 1) return null;
-
-    // Bygg arrays (index 0 = idag, 1 = igår osv)
-    const closes     = entries.map(e => parseFloat(e[1]['4. close']));
-    const highs      = entries.map(e => parseFloat(e[1]['2. high']));
-    const volumes    = entries.map(e => parseFloat(e[1]['5. volume']));
-    const timestamps = entries.map(e => new Date(e[0]).getTime() / 1000);
+    // Twelve Data returnerar nyast först
+    const entries = json.values;
+    const closes     = entries.map(e => parseFloat(e.close));
+    const highs      = entries.map(e => parseFloat(e.high));
+    const volumes    = entries.map(e => parseFloat(e.volume));
+    const timestamps = entries.map(e => new Date(e.datetime).getTime() / 1000);
     const n = closes.length;
 
     const todayClose     = closes[n - 1];
@@ -1266,23 +1263,22 @@ async function debugAMD() {
   const to   = Math.floor(Date.now() / 1000);
   const from = to - (days + 60) * 24 * 3600;
 
-  const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=AMD&outputsize=compact&apikey=${AV_KEY}`;
+  const url = `https://api.twelvedata.com/time_series?symbol=AMD&interval=1day&outputsize=110&apikey=${TD_KEY}`;
 
   try {
     const resp = await fetch(url);
     const json = await resp.json();
 
-    const series = json['Time Series (Daily)'];
-    if (!series) {
-      banner.innerHTML = `❌ Alpha Vantage svarade fel<br>Rådata: ${JSON.stringify(json).substring(0,200)}`;
+    if (json.status === 'error' || !json.values) {
+      banner.innerHTML = `❌ Twelve Data svarade fel<br>Rådata: ${JSON.stringify(json).substring(0,200)}`;
       return;
     }
 
-    const entries    = Object.entries(series).sort((a, b) => new Date(b[0]) - new Date(a[0]));
-    const closes     = entries.map(e => parseFloat(e[1]['4. close']));
-    const highs      = entries.map(e => parseFloat(e[1]['2. high']));
-    const volumes    = entries.map(e => parseFloat(e[1]['5. volume']));
-    const timestamps = entries.map(e => new Date(e[0]).getTime() / 1000);
+    const entries    = json.values;
+    const closes     = entries.map(e => parseFloat(e.close));
+    const highs      = entries.map(e => parseFloat(e.high));
+    const volumes    = entries.map(e => parseFloat(e.volume));
+    const timestamps = entries.map(e => new Date(e.datetime).getTime() / 1000);
     const n = closes.length;
 
     const todayClose     = closes[n - 1];
@@ -1320,20 +1316,17 @@ async function analyzeConsolidation(ticker, index, badge, consolDays, consolRang
     const to   = Math.floor(Date.now() / 1000);
     const from = to - (consolDays + 60) * 24 * 3600;
 
-    const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${ticker}&outputsize=compact&apikey=${AV_KEY}`;
+    const url = `https://api.twelvedata.com/time_series?symbol=${ticker}&interval=1day&outputsize=${consolDays + 10}&apikey=${TD_KEY}`;
     const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
 
-    const series = json['Time Series (Daily)'];
-    if (!series) return null;
+    if (json.status === 'error' || !json.values || json.values.length < consolDays + 5) return null;
 
-    const entries = Object.entries(series).sort((a, b) => new Date(b[0]) - new Date(a[0]));
-    if (entries.length < consolDays + 5) return null;
-
-    const closes     = entries.map(e => parseFloat(e[1]['4. close']));
-    const volumes    = entries.map(e => parseFloat(e[1]['5. volume']));
-    const timestamps = entries.map(e => new Date(e[0]).getTime() / 1000);
+    const entries    = json.values;
+    const closes     = entries.map(e => parseFloat(e.close));
+    const volumes    = entries.map(e => parseFloat(e.volume));
+    const timestamps = entries.map(e => new Date(e.datetime).getTime() / 1000);
     const n = closes.length;
 
     // Dagens data
@@ -1439,6 +1432,5 @@ function updateLastScan() {
     `Senaste skanning: ${now.toLocaleTimeString('sv-SE', {hour:'2-digit',minute:'2-digit'})} — ${now.toLocaleDateString('sv-SE')}`;
 }
 </script>
-
-
-</body></html>
+</body>
+</html>
