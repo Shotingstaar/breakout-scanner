@@ -538,7 +538,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.0</span></div>
     <div class="market-status">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -1278,7 +1278,7 @@ async function debugAMD() {
     const timestamps = json.timestamps;
     
     // Extra debug: visa första och sista datum
-    //banner.innerHTML += `<br>🗓 Första: ${entries[0].datetime} | Sista: ${entries[entries.length-1].datetime}`;
+    banner.innerHTML += `<br>🗓 Första: ${entries[0].datetime} | Sista: ${entries[entries.length-1].datetime}`;
     const n = closes.length;
 
     const todayClose     = closes[n - 1];
