@@ -538,7 +538,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.2</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.3</span></div>
     <div class="market-status">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -991,7 +991,7 @@ function showApiBanner(type, msg) {
 async function analyzeStock(ticker, index, badge, days, volFactor) {
   try {
     // Render backend (yfinance — aktuell data)
-    const url = `https://breakout-api-d8fh.onrender.com/stock?symbol=${ticker}&days=${days}`;
+    const url = `https://breakout-api-d8fh.onrender.com/stock?symbol=${ticker}&days=${days}&t=${Date.now()}`;
     const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
@@ -1254,7 +1254,7 @@ async function debugAMD() {
   const to   = Math.floor(Date.now() / 1000);
   const from = to - (days + 60) * 24 * 3600;
 
-  const url = `https://breakout-api-d8fh.onrender.com/stock?symbol=AMD&days=110`;
+  const url = `https://breakout-api-d8fh.onrender.com/stock?symbol=AMD&days=110&t=${Date.now()}`;
 
   try {
     const resp = await fetch(url);
@@ -1309,7 +1309,7 @@ async function analyzeConsolidation(ticker, index, badge, consolDays, consolRang
     const to   = Math.floor(Date.now() / 1000);
     const from = to - (consolDays + 60) * 24 * 3600;
 
-    const url = `https://breakout-api-d8fh.onrender.com/stock?symbol=${ticker}&days=${consolDays + 10}`;
+    const url = `https://breakout-api-d8fh.onrender.com/stock?symbol=${ticker}&days=${consolDays + 10}&t=${Date.now()}`;
     const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
