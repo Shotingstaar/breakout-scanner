@@ -538,7 +538,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.3</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.4</span></div>
     <div class="market-status">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -1014,7 +1014,7 @@ async function analyzeStock(ticker, index, badge, days, volFactor) {
     const dataDate = new Date(todayTimestamp * 1000);
     const now      = new Date();
     const diffDays = Math.floor((now - dataDate) / (1000 * 3600 * 24));
-    const dateStr  = dataDate.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+    const dateStr  = json.dates ? json.dates[0] : dataDate.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
     const isOld    = diffDays > 3;
 
     // Jämför stängningspris mot tidigare stängningspriser (inte high)
@@ -1275,7 +1275,7 @@ async function debugAMD() {
 
     const todayClose     = closes[n - 1];
     const todayTimestamp = timestamps[n - 1];
-    const todayDate      = new Date(todayTimestamp * 1000).toLocaleDateString('sv-SE');
+    const todayDate      = json.dates ? json.dates[0] : new Date(todayTimestamp * 1000).toLocaleDateString('sv-SE');
 
     const lookbackCloses = closes.slice(-(days + 1), -1);
     const high100        = Math.max(...lookbackCloses);
