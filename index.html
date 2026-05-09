@@ -538,7 +538,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.0</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.1</span></div>
     <div class="market-status">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -716,8 +716,9 @@ function setMode(mode) {
   }
 }
 
-// Finnhub API-nyckel — byt ut mot din nyckel från finnhub.io
+// Finnhub används bara för indexvärden (SPY, DIA, EWD) — aktiedata hämtas från Render
 const FINNHUB_KEY = 'd7tjpi9r01qlbd3ken3gd7tjpi9r01qlbd3ken40';
+const API_URL = 'https://breakout-api-d8fh.onrender.com'; // Render backend — aktuell aktiedata
 const TD_KEY = '7bf959615fe04daa9ee87980fe49e679'; // Twelve Data — historisk data
 
 // Fullständiga S&P 500 topp 50 + alla 30 Dow Jones-aktier
@@ -959,24 +960,16 @@ async function runScan() {
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function testApiConnection() {
-  if (FINNHUB_KEY === 'DIN_NYCKEL_HÄR') {
-    showApiBanner('error', '⚠️ Ingen API-nyckel — gå till finnhub.io och skaffa gratis nyckel, byt sedan ut DIN_NYCKEL_HÄR i koden');
-    return false;
-  }
   try {
-    const resp = await fetch(`https://finnhub.io/api/v1/quote?symbol=AAPL&token=${FINNHUB_KEY}`, {mode: 'cors'});
-    if (resp.status === 401 || resp.status === 403) {
-      showApiBanner('error', '🔴 API-nyckel ogiltig — kontrollera din nyckel på finnhub.io');
-      return false;
-    }
+    const resp = await fetch(`${API_URL}/`);
     if (!resp.ok) {
       showApiBanner('error', `🔴 Anslutningsfel (${resp.status}) — kontrollera internetanslutningen`);
       return false;
     }
-    showApiBanner('success', '🟢 Ansluten till Finnhub — hämtar aktiedata...');
+    showApiBanner('success', '🟢 Ansluten till Breakout API — hämtar aktiedata...');
     return true;
   } catch (err) {
-    showApiBanner('error', '🔴 Blockerad eller ingen internet — kontrollera anslutningen och försök igen');
+    showApiBanner('error', '🔴 Kan inte nå Breakout API — kontrollera internetanslutningen');
     return false;
   }
 }
@@ -1255,7 +1248,7 @@ function toggleChart(i) {
 async function debugAMD() {
   const banner = document.getElementById('apiBanner');
   banner.style.cssText = 'display:flex; border-radius:10px; padding:12px 14px; margin-bottom:16px; align-items:center; gap:10px; font-size:11px; line-height:1.6; background:rgba(0,229,255,0.06); border:1px solid rgba(0,229,255,0.25); color:var(--accent); flex-direction:column;';
-  banner.textContent = '🔍 Hämtar AMD-data från Finnhub...';
+  banner.textContent = '🔍 Hämtar AMD-data från Render backend...';
 
   const days = 100;
   const to   = Math.floor(Date.now() / 1000);
@@ -1278,7 +1271,6 @@ async function debugAMD() {
     const timestamps = json.timestamps;
     
     // Extra debug: visa första och sista datum
-    //banner.innerHTML += `<br>🗓 Första: ${entries[0].datetime} | Sista: ${entries[entries.length-1].datetime}`;
     const n = closes.length;
 
     const todayClose     = closes[n - 1];
@@ -1389,7 +1381,7 @@ async function analyzeConsolidation(ticker, index, badge, consolDays, consolRang
 }
 
 // ==========================================
-// INDEX DATA — Finnhub live
+// INDEX DATA — Finnhub (fungerar för quote-anrop)
 // ==========================================
 async function updateIndexData() {
   // S&P 500 ETF (SPY), Dow Jones ETF (DIA), OMX Stockholm 30 ETF (XACT OMXS30 på Stockholmsbörsen)
