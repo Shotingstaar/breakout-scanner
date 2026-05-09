@@ -538,7 +538,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.1</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.2</span></div>
     <div class="market-status">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -1287,6 +1287,7 @@ async function debugAMD() {
 
     banner.innerHTML = `
       <div style="font-weight:700;color:var(--accent);margin-bottom:4px;">🔍 AMD Debug</div>
+      <div>🌐 URL: <b>${url}</b></div>
       <div>📅 Senaste data: <b>${todayDate}</b></div>
       <div>💰 Stängningspris: <b>$${todayClose.toFixed(2)}</b></div>
       <div>📈 ${days}-dagars högsta (close): <b>$${high100.toFixed(2)}</b></div>
