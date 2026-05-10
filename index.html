@@ -538,7 +538,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.4</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.5</span></div>
     <div class="market-status">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -1004,10 +1004,10 @@ async function analyzeStock(ticker, index, badge, days, volFactor) {
     const timestamps = json.timestamps;
     const n = closes.length;
 
-    const todayClose     = closes[n - 1];
-    const todayVol       = volumes[n - 1];
-    const todayTimestamp = timestamps[n - 1];
-    const prevClose      = closes[n - 2];
+    const todayClose     = closes[0]; // nyast först
+    const todayVol       = volumes[0]; // nyast först
+    const todayTimestamp = timestamps[0]; // nyast först
+    const prevClose      = closes[1]; // igår
     const changePct      = ((todayClose - prevClose) / prevClose * 100);
 
     // Kontrollera hur gammal datan är
@@ -1019,16 +1019,16 @@ async function analyzeStock(ticker, index, badge, days, volFactor) {
 
     // Jämför stängningspris mot tidigare stängningspriser (inte high)
     // Detta fångar breakouts som AMD igår där close > alla tidigare closes
-    const lookbackCloses = closes.slice(-(days + 1), -1);
+    const lookbackCloses = closes.slice(1, days + 1); // hoppa över idag
     const high100 = Math.max(...lookbackCloses);
 
-    const last20vols = volumes.slice(-21, -1);
+    const last20vols = volumes.slice(1, 21); // hoppa över idag
     const avgVol = last20vols.reduce((s, v) => s + v, 0) / last20vols.length;
 
     if (todayClose <= high100) return null;
     if (todayVol < avgVol * volFactor) return null;
 
-    const priceHistory = closes.slice(-(days + 1), -1).map(c => +c.toFixed(2));
+    const priceHistory = closes.slice(1, days + 1).reverse().map(c => +c.toFixed(2));
     priceHistory.push(+todayClose.toFixed(2));
 
     return {
@@ -1273,15 +1273,15 @@ async function debugAMD() {
     // Extra debug: visa första och sista datum
     const n = closes.length;
 
-    const todayClose     = closes[n - 1];
-    const todayTimestamp = timestamps[n - 1];
+    const todayClose     = closes[0]; // nyast först
+    const todayTimestamp = timestamps[0]; // nyast först
     const todayDate      = json.dates ? json.dates[0] : new Date(todayTimestamp * 1000).toLocaleDateString('sv-SE');
 
-    const lookbackCloses = closes.slice(-(days + 1), -1);
+    const lookbackCloses = closes.slice(1, days + 1); // hoppa över idag
     const high100        = Math.max(...lookbackCloses);
     const isBreakout     = todayClose > high100;
 
-    const last20vols = volumes.slice(-21, -1);
+    const last20vols = volumes.slice(1, 21); // hoppa över idag
     const avgVol     = last20vols.reduce((s, v) => s + v, 0) / last20vols.length;
     const volRatio   = (volumes[n-1] / avgVol).toFixed(2);
 
@@ -1322,10 +1322,10 @@ async function analyzeConsolidation(ticker, index, badge, consolDays, consolRang
     const n = closes.length;
 
     // Dagens data
-    const todayClose     = closes[n - 1];
-    const todayVol       = volumes[n - 1];
-    const todayTimestamp = timestamps[n - 1];
-    const prevClose      = closes[n - 2];
+    const todayClose     = closes[0]; // nyast först
+    const todayVol       = volumes[0]; // nyast först
+    const todayTimestamp = timestamps[0]; // nyast först
+    const prevClose      = closes[1]; // igår
     const changePct      = ((todayClose - prevClose) / prevClose * 100);
 
     // Konsolideringsperioden = dagarna FÖRE idag
