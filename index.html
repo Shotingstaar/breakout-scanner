@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v2.3</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v2.5</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -1021,7 +1021,9 @@ async function runScan() {
     showApiBanner('success', `🔍 Lägger till Avanza-länkar...`);
     for (const r of scanResults) {
       // Bygg Avanza-sök-URL direkt utan API-anrop
-      r.avanzaUrl = `https://www.avanza.se/aktier/lista.html#searchQuery=${r.ticker}`;
+      // Länk till Avanza-sökning + TradingView för graf
+      r.avanzaUrl = `https://www.avanza.se/ab/sok/inline?query=${r.ticker}`;
+      r.tradingViewUrl = `https://www.tradingview.com/chart/?symbol=${r.ticker}`;
     }
   }
 
@@ -1186,7 +1188,10 @@ function renderResults(results) {
                 ${r.volRatio>=3?'🔥':r.volRatio>=2?'⚡':'✅'} ${r.volRatio.toFixed(2)}×
               </td>
               <td style="padding:10px 8px;">
-                ${r.avanzaUrl ? `<a href="${r.avanzaUrl}" target="_blank" style="color:var(--accent);text-decoration:none;border:1px solid var(--accent);border-radius:4px;padding:3px 8px;font-size:10px;">📈 Öppna</a>` : '—'}
+                <div style="display:flex;gap:4px;">
+                  <a href="https://www.avanza.se/ab/sok/inline?query=${r.ticker}" target="_blank" style="color:var(--gold);text-decoration:none;border:1px solid var(--gold);border-radius:4px;padding:3px 6px;font-size:10px;">AZ</a>
+                  <a href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank" style="color:var(--accent);text-decoration:none;border:1px solid var(--accent);border-radius:4px;padding:3px 6px;font-size:10px;">TV</a>
+                </div>
               </td>
             </tr>
           `).join('')}
@@ -1275,7 +1280,10 @@ function renderResults(results) {
         <canvas id="canvas-${i}" height="140"></canvas>
       </div>
 
-      ${r.avanzaUrl ? `<a href="${r.avanzaUrl}" target="_blank" style="display:block;text-align:center;margin-top:10px;padding:8px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.25);border-radius:8px;color:var(--accent);text-decoration:none;font-size:11px;font-weight:700;">📈 Öppna på Avanza</a>` : ''}
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <a href="https://www.avanza.se/ab/sok/inline?query=${r.ticker}" target="_blank" style="flex:1;display:block;text-align:center;padding:8px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:8px;color:var(--gold);text-decoration:none;font-size:11px;font-weight:700;">💛 Avanza</a>
+        <a href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank" style="flex:1;display:block;text-align:center;padding:8px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.25);border-radius:8px;color:var(--accent);text-decoration:none;font-size:11px;font-weight:700;">📈 TradingView</a>
+      </div>
 
       <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--muted);cursor:pointer" onclick="toggleChart(${i})">
         <span id="chart-toggle-${i}">▼ Visa graf</span>
