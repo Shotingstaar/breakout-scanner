@@ -20,7 +20,29 @@
     --gold: #ffd700;
     --text: #e2e8f0;
     --muted: #4a5568;
+    --adaptive: #cbd5e0;
     --glow: 0 0 20px rgba(0,229,255,0.3);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface2: #e8edf2;
+      --border: #cbd5e0;
+      --text: #1a202c;
+      --muted: #4a5568;
+      --adaptive: #2d3748;
+      --accent: #0077cc;
+      --green: #00875a;
+      --red: #c53030;
+      --gold: #b7791f;
+    }
+    body::before {
+      background-image: 
+        linear-gradient(rgba(0,119,204,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,119,204,0.04) 1px, transparent 1px);
+    }
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -538,8 +560,8 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v1.7</span></div>
-    <div class="market-status">
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v1.9</span></div>
+    <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
     </div>
@@ -555,12 +577,12 @@
   <!-- Index cards -->
   <div class="indices">
     <div class="index-card sp">
-      <div class="index-name">S&P 500 <span style="font-size:8px;color:var(--muted);">via SPY ETF</span></div>
+      <div class="index-name" style="color:var(--adaptive)">S&P 500 <span style="font-size:8px;color:var(--muted);">via SPY ETF</span></div>
       <div class="index-value" id="spValue">—</div>
       <div class="index-change" id="spChange" style="color:var(--muted);">Hämtar...</div>
     </div>
     <div class="index-card dj">
-      <div class="index-name">DOW JONES <span style="font-size:8px;color:var(--muted);">via DIA ETF</span></div>
+      <div class="index-name" style="color:var(--adaptive)">DOW JONES <span style="font-size:8px;color:var(--muted);">via DIA ETF</span></div>
       <div class="index-value" id="djValue">—</div>
       <div class="index-change" id="djChange" style="color:var(--muted);">Hämtar...</div>
     </div>
@@ -569,7 +591,7 @@
   <!-- Stockholm index card -->
   <div style="margin-bottom:20px;">
     <div class="index-card" style="border-top:2px solid #00ccff;">
-      <div class="index-name">STOCKHOLM <span style="font-size:8px;color:var(--muted);">via EWD ETF</span></div>
+      <div class="index-name" style="color:var(--adaptive)">STOCKHOLM <span style="font-size:8px;color:var(--muted);">via EWD ETF</span></div>
       <div class="index-value" id="stValue">—</div>
       <div class="index-change" id="stChange" style="color:var(--muted);">Hämtar...</div>
     </div>
@@ -591,24 +613,24 @@
 
     <div class="control-row">
       <div>
-        <div class="control-label">Dagar för högsta</div>
-        <div class="control-sub">Antal handelsdagar</div>
+        <div class="control-label" style="color:var(--text)">Dagar för högsta</div>
+        <div class="control-sub" style="color:var(--adaptive)">Antal handelsdagar</div>
       </div>
       <input type="number" id="daysInput" value="100" min="10" max="252">
     </div>
 
     <div class="control-row">
       <div>
-        <div class="control-label">Volymfaktor</div>
-        <div class="control-sub">× normalvolym</div>
+        <div class="control-label" style="color:var(--text)">Volymfaktor</div>
+        <div class="control-sub" style="color:var(--adaptive)">× normalvolym</div>
       </div>
       <input type="number" id="volInput" value="1.5" min="1.1" max="5" step="0.1">
     </div>
 
     <div class="control-row">
       <div>
-        <div class="control-label">Autoskanning</div>
-        <div class="control-sub">Kör efter börsens stängning</div>
+        <div class="control-label" style="color:var(--text)">Autoskanning</div>
+        <div class="control-sub" style="color:var(--adaptive)">Kör efter börsens stängning</div>
       </div>
       <label class="toggle">
         <input type="checkbox" id="autoScan" checked onchange="toggleAuto()">
@@ -618,8 +640,8 @@
 
     <div class="control-row">
       <div>
-        <div class="control-label">Push-notiser</div>
-        <div class="control-sub">Vid nya breakouts</div>
+        <div class="control-label" style="color:var(--text)">Push-notiser</div>
+        <div class="control-sub" style="color:var(--adaptive)">Vid nya breakouts</div>
       </div>
       <label class="toggle">
         <input type="checkbox" id="pushToggle" onchange="togglePush()">
@@ -631,15 +653,15 @@
     <div id="consolSettings" style="display:none; border-top:1px solid var(--border); padding-top:14px; margin-top:4px;">
       <div class="control-row">
         <div>
-          <div class="control-label">Konsolideringsdagar</div>
-          <div class="control-sub">Antal dagar sidledes</div>
+          <div class="control-label" style="color:var(--text)">Konsolideringsdagar</div>
+          <div class="control-sub" style="color:var(--adaptive)">Antal dagar sidledes</div>
         </div>
         <input type="number" id="consolDays" value="20" min="5" max="60">
       </div>
       <div class="control-row">
         <div>
-          <div class="control-label">Max intervall</div>
-          <div class="control-sub">% mellan topp och botten</div>
+          <div class="control-label" style="color:var(--text)">Max intervall</div>
+          <div class="control-sub" style="color:var(--adaptive)">% mellan topp och botten</div>
         </div>
         <input type="number" id="consolRange" value="10" min="3" max="25" step="0.5">
       </div>
@@ -694,18 +716,18 @@
   </div>
 
   <div class="results-header">
-    <div class="results-title">Breakouts</div>
+    <div class="results-title" style="color:var(--text)">Breakouts</div>
     <div class="results-count" id="resultsCount">0 hittade</div>
   </div>
 
   <div id="resultsList">
     <div class="empty-state">
       <div class="empty-icon">📡</div>
-      <div class="empty-text">Kör en skanning för att hitta<br>aktier som nått 100-dagars högsta<br>med ovanlig volym</div>
+      <div class="empty-text" style="color:var(--adaptive)">Kör en skanning för att hitta<br>aktier som nått 100-dagars högsta<br>med ovanlig volym</div>
     </div>
   </div>
 
-  <div class="last-scan" id="lastScan">Senaste skanning: —</div>
+  <div class="last-scan" style="color:var(--adaptive)" id="lastScan">Senaste skanning: —</div>
 </div>
 
 <script>
@@ -972,9 +994,25 @@ async function runScan() {
   }
 
   scanResults.sort((a, b) => b.volRatio - a.volRatio);
+
+  // Kolla Avanza för varje träff
+  if (scanResults.length > 0) {
+    showApiBanner('success', `🔍 Kontrollerar ${scanResults.length} träffar mot Avanza...`);
+    const avanzaResults = [];
+    for (const r of scanResults) {
+      const avanza = await findOnAvanza(r.ticker);
+      if (avanza.found) {
+        r.avanzaUrl = avanza.url;
+        r.avanzaName = avanza.name;
+        avanzaResults.push(r);
+      }
+    }
+    scanResults = avanzaResults;
+  }
+
   progressEl.style.display = 'none';
   document.getElementById('stopBtn').style.display = 'none';
-  showApiBanner('success', `✅ Klar — ${scanned} aktier skannade · ${scanResults.length} breakouts hittade`);
+  showApiBanner('success', `✅ Klar — ${scanned} aktier skannade · ${scanResults.length} på Avanza`);
   renderResults(scanResults);
   updateLastScan();
 
@@ -1097,8 +1135,48 @@ function renderResults(results) {
   if (results.length === 0) {
     list.innerHTML = `<div class="empty-state">
       <div class="empty-icon">🔍</div>
-      <div class="empty-text">Inga breakouts detekterade<br>vid senaste skanningen</div>
+      <div class="empty-text" style="color:var(--adaptive)">Inga breakouts detekterade<br>vid senaste skanningen</div>
     </div>`;
+    return;
+  }
+
+  // PC-läge: visa som tabell
+  if (isPC) {
+    list.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:12px;font-family:'Space Mono',monospace;">
+        <thead>
+          <tr style="background:var(--surface2);color:var(--muted);text-align:left;">
+            <th style="padding:10px 8px;">Ticker</th>
+            <th style="padding:10px 8px;">Index</th>
+            <th style="padding:10px 8px;">Datum</th>
+            <th style="padding:10px 8px;">Pris</th>
+            <th style="padding:10px 8px;">Förändring</th>
+            <th style="padding:10px 8px;">${results[0]?.days||100}D Högsta</th>
+            <th style="padding:10px 8px;">Volym idag</th>
+            <th style="padding:10px 8px;">Vol-faktor</th>
+            <th style="padding:10px 8px;">Avanza</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${results.map((r, i) => `
+            <tr style="border-bottom:1px solid var(--border);background:${i%2===0?'var(--surface)':'var(--surface2)'};">
+              <td style="padding:10px 8px;color:var(--accent);font-weight:700;">${r.ticker}</td>
+              <td style="padding:10px 8px;color:var(--muted);">${r.index}</td>
+              <td style="padding:10px 8px;color:var(--muted);">${r.dateStr||''}</td>
+              <td style="padding:10px 8px;color:var(--green);">$${r.price}</td>
+              <td style="padding:10px 8px;color:${parseFloat(r.change)>=0?'var(--green)':'var(--red)'};">${parseFloat(r.change)>=0?'▲':'▼'} ${r.change}%</td>
+              <td style="padding:10px 8px;color:var(--gold);">$${r.high100}</td>
+              <td style="padding:10px 8px;">${formatVol(r.todayVol)}</td>
+              <td style="padding:10px 8px;color:${r.volRatio>=3?'#ff6b35':r.volRatio>=2?'var(--gold)':'var(--green)'};">
+                ${r.volRatio>=3?'🔥':r.volRatio>=2?'⚡':'✅'} ${r.volRatio.toFixed(2)}×
+              </td>
+              <td style="padding:10px 8px;">
+                ${r.avanzaUrl ? `<a href="${r.avanzaUrl}" target="_blank" style="color:var(--accent);text-decoration:none;border:1px solid var(--accent);border-radius:4px;padding:3px 8px;font-size:10px;">📈 Öppna</a>` : '—'}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
     return;
   }
 
@@ -1117,7 +1195,7 @@ function renderResults(results) {
       <div class="stock-top">
         <div>
           <div class="stock-ticker">${r.ticker}</div>
-          <div class="stock-name">${r.index}</div>
+          <div class="stock-name" style="color:var(--adaptive)">${r.index}</div>
         </div>
         <div class="stock-index-badge ${r.badge}">${r.index}</div>
       </div>
@@ -1133,29 +1211,29 @@ function renderResults(results) {
 
       <div class="stock-metrics">
         <div class="metric">
-          <div class="metric-label">Pris</div>
+          <div class="metric-label" style="color:var(--adaptive)">Pris</div>
           <div class="metric-value green">$${r.price}</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Förändring</div>
+          <div class="metric-label" style="color:var(--adaptive)">Förändring</div>
           <div class="metric-value green">▲ ${r.change}%</div>
         </div>
         <div class="metric">
-          <div class="metric-label">${r.days}D Högsta</div>
+          <div class="metric-label" style="color:var(--adaptive)">${r.days}D Högsta</div>
           <div class="metric-value highlight">$${r.high100}</div>
         </div>
       </div>
       <div class="stock-metrics">
         <div class="metric">
-          <div class="metric-label">Volym idag</div>
+          <div class="metric-label" style="color:var(--adaptive)">Volym idag</div>
           <div class="metric-value green">${formatVol(r.todayVol)}</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Snittvolym</div>
+          <div class="metric-label" style="color:var(--adaptive)">Snittvolym</div>
           <div class="metric-value">${formatVol(r.avgVol)}</div>
         </div>
         <div class="metric">
-          <div class="metric-label">Vol-faktor</div>
+          <div class="metric-label" style="color:var(--adaptive)">Vol-faktor</div>
           <div class="metric-value" style="color:${r.volRatio >= 3 ? '#ff6b35' : r.volRatio >= 2 ? '#ffd700' : 'var(--green)'}">
             ${r.volRatio >= 3 ? '🔥' : r.volRatio >= 2 ? '⚡' : '✅'} ${r.volRatio.toFixed(2)}×
           </div>
@@ -1181,6 +1259,8 @@ function renderResults(results) {
         </div>
         <canvas id="canvas-${i}" height="140"></canvas>
       </div>
+
+      ${r.avanzaUrl ? `<a href="${r.avanzaUrl}" target="_blank" style="display:block;text-align:center;margin-top:10px;padding:8px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.25);border-radius:8px;color:var(--accent);text-decoration:none;font-size:11px;font-weight:700;">📈 Öppna på Avanza</a>` : ''}
 
       <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--muted);cursor:pointer" onclick="toggleChart(${i})">
         <span id="chart-toggle-${i}">▼ Visa graf</span>
@@ -1469,6 +1549,45 @@ async function updateIndexData() {
       console.warn('Index fetch failed for', idx.symbol, e);
     }
   }
+}
+
+// ==========================================
+// DEVICE DETECTION
+// ==========================================
+const isPC = window.innerWidth >= 768;
+
+// ==========================================
+// AVANZA INTEGRATION
+// ==========================================
+const avanzaCache = {};
+
+async function findOnAvanza(ticker) {
+  if (avanzaCache[ticker] !== undefined) return avanzaCache[ticker];
+  try {
+    const resp = await fetch(`https://www.avanza.se/ab/sok/inline?query=${ticker}`, {
+      headers: {'Accept': 'application/json'}
+    });
+    const json = await resp.json();
+    const hits = json.hits || [];
+    // Leta efter exakt matchning på ticker eller namn
+    const match = hits.find(h => 
+      h.link && (
+        h.link.shortName?.toUpperCase() === ticker ||
+        h.link.orderbookId
+      )
+    );
+    if (match) {
+      const id = match.link.orderbookId;
+      const name = match.link.shortName || ticker;
+      const url = `https://www.avanza.se${match.link.linkAddress}`;
+      avanzaCache[ticker] = {found: true, url, name, id};
+    } else {
+      avanzaCache[ticker] = {found: false};
+    }
+  } catch(e) {
+    avanzaCache[ticker] = {found: false};
+  }
+  return avanzaCache[ticker];
 }
 
 // ==========================================
