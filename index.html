@@ -538,7 +538,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:10px;color:#aab4c8;font-weight:400;">v1.5</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v1.7</span></div>
     <div class="market-status">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -649,9 +649,14 @@
       🔍 DEBUGGA AMD
     </button>
 
-    <button class="scan-btn" id="scanBtn" onclick="runScan()">
-      <span>▶ Kör skanning</span>
-    </button>
+    <div style="display:flex;gap:10px;">
+      <button class="scan-btn" id="scanBtn" onclick="runScan()" style="flex:3;">
+        <span>▶ Kör skanning</span>
+      </button>
+      <button id="stopBtn" onclick="stopScan()" style="flex:1;padding:14px;background:transparent;border:1px solid var(--red);border-radius:10px;color:var(--red);font-family:'Space Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;display:none;">
+        ■ STOPP
+      </button>
+    </div>
   </div>
 
   <!-- API Status banner -->
@@ -669,6 +674,25 @@
   </div>
 
   <!-- Results -->
+  <!-- History & Download buttons -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button onclick="showHistory()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;">
+      📅 HISTORIK
+    </button>
+    <button onclick="downloadExcel()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--green);border-radius:8px;color:var(--green);font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;">
+      ⬇ EXCEL
+    </button>
+  </div>
+
+  <!-- History panel -->
+  <div id="historyPanel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--accent);letter-spacing:1px;">📅 SKANNINGSHISTORIK</div>
+      <button onclick="document.getElementById('historyPanel').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div id="historyList"><div style="color:var(--muted);font-size:11px;text-align:center;padding:20px;">Laddar historik...</div></div>
+  </div>
+
   <div class="results-header">
     <div class="results-title">Breakouts</div>
     <div class="results-count" id="resultsCount">0 hittade</div>
@@ -927,8 +951,12 @@ async function runScan() {
   const consolDays  = parseInt(document.getElementById('consolDays').value) || 20;
   const consolRange = parseFloat(document.getElementById('consolRange').value) || 10;
 
+  scanAborted = false;
+  document.getElementById('stopBtn').style.display = 'block';
+
   let scanned = 0;
   for (const stock of all) {
+    if (scanAborted) break;
     await delay(500); // Render/yfinance: ingen rate limit
     let result = null;
     if (scanMode === 'breakout') {
@@ -945,9 +973,15 @@ async function runScan() {
 
   scanResults.sort((a, b) => b.volRatio - a.volRatio);
   progressEl.style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'none';
   showApiBanner('success', `✅ Klar — ${scanned} aktier skannade · ${scanResults.length} breakouts hittade`);
   renderResults(scanResults);
   updateLastScan();
+
+  // Spara till historik om vi hittade något
+  if (scanResults.length > 0) {
+    await saveScanToHistory(scanResults, {days, volFactor, mode: scanMode});
+  }
 
   btn.classList.remove('loading');
   btn.querySelector('span').textContent = '▶ Kör skanning';
@@ -1072,6 +1106,8 @@ function renderResults(results) {
   results.forEach((r, i) => {
     const card = document.createElement('div');
     card.className = 'stock-card';
+    if (r.volRatio >= 2) card.style.borderColor = 'rgba(255,107,53,0.5)';
+    else if (r.volRatio >= 1.5) card.style.borderColor = 'rgba(255,215,0,0.4)';
     card.style.animationDelay = `${i * 0.08}s`;
 
     const volPct = Math.min((r.todayVol / r.avgVol) * 100, 250);
@@ -1088,9 +1124,10 @@ function renderResults(results) {
 
       ${r.isOld ? `<div style="background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:6px;padding:7px 10px;margin-bottom:8px;font-size:10px;color:#ff6b35;">⚠️ Gammal data — breakout skedde ${r.dateStr} (${r.diffDays} dagar sedan)</div>` : ''}
 
-      <div class="signal-bar" style="${r.isConsol ? 'background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);' : ''}">
+      ${r.volRatio >= 2 ? `<div style="background:rgba(255,107,53,0.15);border:1px solid rgba(255,107,53,0.5);border-radius:6px;padding:6px 10px;margin-bottom:6px;font-size:11px;color:#ff6b35;font-weight:700;text-align:center;letter-spacing:1px;">🔥 EXTREM VOLYM ${r.volRatio.toFixed(1)}× NORMALT</div>` : ''}
+      <div class="signal-bar" style="${r.isConsol ? 'background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);' : r.volRatio >= 2 ? 'background:rgba(255,107,53,0.1);border-color:rgba(255,107,53,0.4);' : ''}">
         <span class="signal-icon">${r.isConsol ? '📦' : '🚨'}</span>
-        <span class="signal-text" style="${r.isConsol ? 'color:var(--green);' : ''}">${r.isConsol ? r.consolDays+'-DAG KONSOLIDERINGS-BREAKOUT ('+r.rangePercent+'% intervall)' : r.days+'-DAGARS BREAKOUT'}</span>
+        <span class="signal-text" style="${r.isConsol ? 'color:var(--green);' : r.volRatio >= 2 ? 'color:#ff6b35;' : ''}">${r.isConsol ? r.consolDays+'-DAG KONSOLIDERINGS-BREAKOUT ('+r.rangePercent+'% intervall)' : r.days+'-DAGARS BREAKOUT'}</span>
         <span class="signal-sub">${r.dateStr} · +${(r.volRatio).toFixed(1)}× vol</span>
       </div>
 
@@ -1107,6 +1144,22 @@ function renderResults(results) {
           <div class="metric-label">${r.days}D Högsta</div>
           <div class="metric-value highlight">$${r.high100}</div>
         </div>
+      </div>
+      <div class="stock-metrics">
+        <div class="metric">
+          <div class="metric-label">Volym idag</div>
+          <div class="metric-value green">${formatVol(r.todayVol)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Snittvolym</div>
+          <div class="metric-value">${formatVol(r.avgVol)}</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Vol-faktor</div>
+          <div class="metric-value" style="color:${r.volRatio >= 3 ? '#ff6b35' : r.volRatio >= 2 ? '#ffd700' : 'var(--green)'}">
+            ${r.volRatio >= 3 ? '🔥' : r.volRatio >= 2 ? '⚡' : '✅'} ${r.volRatio.toFixed(2)}×
+          </div>
+        </div
       </div>
 
       <div class="volume-section">
@@ -1416,6 +1469,118 @@ async function updateIndexData() {
       console.warn('Index fetch failed for', idx.symbol, e);
     }
   }
+}
+
+// ==========================================
+// STOP SCAN
+// ==========================================
+let scanAborted = false;
+
+function stopScan() {
+  scanAborted = true;
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('scanBtn').querySelector('span').textContent = '▶ Kör skanning';
+  showApiBanner('success', '⏹ Skanning stoppad');
+}
+
+// ==========================================
+// SAVE SCAN TO HISTORY
+// ==========================================
+async function saveScanToHistory(results, settings) {
+  try {
+    await fetch(`${API_URL}/save_scan`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        results: results.map(r => ({
+          ticker: r.ticker,
+          index: r.index,
+          price: r.price,
+          high100: r.high100,
+          change: r.change,
+          volRatio: r.volRatio,
+          todayVol: r.todayVol,
+          avgVol: r.avgVol,
+          dateStr: r.dateStr
+        })),
+        settings
+      })
+    });
+  } catch(e) {
+    console.warn('Kunde inte spara historik:', e);
+  }
+}
+
+// ==========================================
+// SHOW HISTORY
+// ==========================================
+async function showHistory() {
+  const panel = document.getElementById('historyPanel');
+  const list  = document.getElementById('historyList');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'none') return;
+
+  list.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px;">Laddar...</div>';
+
+  try {
+    const resp = await fetch(`${API_URL}/history`);
+    const json = await resp.json();
+    const history = json.history || [];
+
+    if (history.length === 0) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px;">Ingen historik sparad ännu</div>';
+      return;
+    }
+
+    // Visa nyast först
+    list.innerHTML = history.reverse().map(scan => `
+      <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;" onclick="showScanResults(${JSON.stringify(scan.results).replace(/"/g, '&quot;')})">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:12px;color:var(--accent);font-weight:700;">${scan.scan_date} kl ${scan.scan_time}</div>
+          <div style="font-size:11px;color:var(--green);">${scan.total_found} breakouts</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">
+          ${scan.results.slice(0,5).map(r => r.ticker).join(', ')}${scan.results.length > 5 ? '...' : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:20px;">Kunde inte ladda historik</div>';
+  }
+}
+
+function showScanResults(results) {
+  scanResults = results;
+  renderResults(results);
+  document.getElementById('historyPanel').style.display = 'none';
+  document.getElementById('resultsCount').textContent = `${results.length} hittade`;
+}
+
+// ==========================================
+// EXCEL EXPORT
+// ==========================================
+function downloadExcel() {
+  if (!scanResults || scanResults.length === 0) {
+    showApiBanner('error', '⚠️ Inga resultat att exportera — kör en skanning först');
+    return;
+  }
+
+  // Bygg CSV (öppnas i Excel)
+  const headers = ['Ticker','Index','Datum','Pris','Förändring%','100D Högsta','Volym idag','Snittvolym','Volymfaktor'];
+  const rows = scanResults.map(r => [
+    r.ticker, r.index, r.dateStr, r.price, r.change,
+    r.high100, Math.round(r.todayVol), Math.round(r.avgVol), r.volRatio.toFixed(2)
+  ]);
+
+  const csv = [headers, ...rows].map(row => row.join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `breakouts_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showApiBanner('success', '✅ Excel-fil nedladdad!');
 }
 
 function updateLastScan() {
