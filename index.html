@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v2.5</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v2.7</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -829,6 +829,8 @@ let scanResults = [];
 // INIT
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Ladda senaste automatiska skanningsresultat
+  loadLatestScan();
   checkNotifPermission();
   updateMarketStatus();
   setInterval(updateMarketStatus, 60000);
@@ -1168,7 +1170,7 @@ function renderResults(results) {
             <th style="padding:10px 8px;">Datum</th>
             <th style="padding:10px 8px;">Pris</th>
             <th style="padding:10px 8px;">Förändring</th>
-            <th style="padding:10px 8px;">${results[0]?.days||100}D Högsta</th>
+            <th style="padding:10px 8px;">${scanMode === 'consol' ? 'Konsol. tak' : (results[0]?.days||100)+'D Högsta'}</th>
             <th style="padding:10px 8px;">Volym idag</th>
             <th style="padding:10px 8px;">Vol-faktor</th>
             <th style="padding:10px 8px;">Avanza</th>
@@ -1571,6 +1573,42 @@ async function updateIndexData() {
       document.getElementById(idx.changeId).textContent = 'Ej tillgänglig';
       console.warn('Index fetch failed for', idx.symbol, e);
     }
+  }
+}
+
+// ==========================================
+// LOAD LATEST AUTO-SCAN FROM DATABASE
+// ==========================================
+async function loadLatestScan() {
+  try {
+    const resp = await fetch(`${API_URL}/latest_scan`);
+    const json = await resp.json();
+    if (json.results && json.results.length > 0) {
+      // Visa resultaten direkt
+      scanResults = json.results.map(r => ({
+        ticker:   r.ticker,
+        index:    r.index,
+        badge:    r.index === 'DOW' ? 'badge-dj' : 'badge-sp',
+        price:    r.price?.toFixed(2),
+        high100:  r.high100?.toFixed(2),
+        change:   r.change?.toFixed(2),
+        avgVol:   r.avgVol,
+        todayVol: r.todayVol,
+        volRatio: r.volRatio,
+        days:     r.days,
+        dateStr:  r.scan_date,
+        isOld:    false,
+        priceHistory: [],
+        avanzaUrl: `https://www.avanza.se/ab/sok/inline?query=${r.ticker}`
+      }));
+      renderResults(scanResults);
+      document.getElementById('resultsCount').textContent = `${scanResults.length} hittade`;
+      document.getElementById('lastScan').textContent = 
+        `Senaste autoskanning: ${r.scan_date} kl ${r.scan_time?.substring(0,5)}`;
+      showApiBanner('success', `✅ Automatisk skanning ${json.scan_date} — ${json.count} breakouts`);
+    }
+  } catch(e) {
+    console.log('Ingen auto-scan data ännu');
   }
 }
 
