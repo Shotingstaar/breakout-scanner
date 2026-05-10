@@ -149,7 +149,8 @@
 
   .index-name {
     font-size: 10px;
-    color: var(--muted);
+    color: var(--text);
+    opacity: 0.8;
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-bottom: 4px;
@@ -166,8 +167,8 @@
     font-size: 11px;
     font-weight: 700;
   }
-  .index-change.up { color: var(--green); }
-  .index-change.down { color: var(--red); }
+  .index-change.up { color: #00dd77; font-weight:700; }
+  .index-change.down { color: #ff4466; font-weight:700; }
 
   /* Scanner controls */
   .controls {
@@ -560,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v1.9</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v2.2</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -577,12 +578,12 @@
   <!-- Index cards -->
   <div class="indices">
     <div class="index-card sp">
-      <div class="index-name" style="color:var(--adaptive)">S&P 500 <span style="font-size:8px;color:var(--muted);">via SPY ETF</span></div>
+      <div class="index-name" style="color:var(--adaptive)">S&P 500 <span style="font-size:8px;color:var(--text);opacity:0.6;">via SPY ETF</span></div>
       <div class="index-value" id="spValue">—</div>
       <div class="index-change" id="spChange" style="color:var(--muted);">Hämtar...</div>
     </div>
     <div class="index-card dj">
-      <div class="index-name" style="color:var(--adaptive)">DOW JONES <span style="font-size:8px;color:var(--muted);">via DIA ETF</span></div>
+      <div class="index-name" style="color:var(--adaptive)">DOW JONES <span style="font-size:8px;color:var(--text);opacity:0.6;">via DIA ETF</span></div>
       <div class="index-value" id="djValue">—</div>
       <div class="index-change" id="djChange" style="color:var(--muted);">Hämtar...</div>
     </div>
@@ -591,7 +592,7 @@
   <!-- Stockholm index card -->
   <div style="margin-bottom:20px;">
     <div class="index-card" style="border-top:2px solid #00ccff;">
-      <div class="index-name" style="color:var(--adaptive)">STOCKHOLM <span style="font-size:8px;color:var(--muted);">via EWD ETF</span></div>
+      <div class="index-name" style="color:var(--adaptive)">STOCKHOLM <span style="font-size:8px;color:var(--text);opacity:0.6;">via EWD ETF</span></div>
       <div class="index-value" id="stValue">—</div>
       <div class="index-change" id="stChange" style="color:var(--muted);">Hämtar...</div>
     </div>
@@ -672,7 +673,18 @@
     </button>
 
     <div style="display:flex;gap:10px;">
-      <button class="scan-btn" id="scanBtn" onclick="runScan()" style="flex:3;">
+      <div class="control-row" style="margin-bottom:12px;">
+      <div>
+        <div class="control-label" style="color:var(--text);">Testläge</div>
+        <div class="control-sub" style="color:var(--adaptive);">Skanna bara kända träffar</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="testMode">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
+    <button class="scan-btn" id="scanBtn" onclick="runScan()" style="flex:3;">
         <span>▶ Kör skanning</span>
       </button>
       <button id="stopBtn" onclick="stopScan()" style="flex:1;padding:14px;background:transparent;border:1px solid var(--red);border-radius:10px;color:var(--red);font-family:'Space Mono',monospace;font-size:12px;font-weight:700;cursor:pointer;display:none;">
@@ -685,10 +697,10 @@
   <div id="apiBanner" style="display:none; border-radius:10px; padding:12px 14px; margin-bottom:16px; align-items:center; gap:10px; font-size:11px; border:1px solid; line-height:1.5;"></div>
 
   <!-- Scan progress -->
-  <div id="scanProgress" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:11px; color:var(--muted);">
+  <div id="scanProgress" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:11px; color:var(--text);">
     <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
       <span style="color:var(--accent); font-weight:700;">SKANNAR</span>
-      <span id="progressText">0 / 0 aktier</span>
+      <span id="progressText" style="color:var(--text);">0 / 0 aktier</span>
     </div>
     <div style="background:var(--surface2); border-radius:4px; height:6px; overflow:hidden;">
       <div id="progressBar" style="height:100%; background:var(--accent); width:0%; transition:width 0.3s; border-radius:4px;"></div>
@@ -768,6 +780,12 @@ const API_URL = 'https://breakout-api-d8fh.onrender.com'; // Render backend — 
 const TD_KEY = '7bf959615fe04daa9ee87980fe49e679'; // Twelve Data — historisk data
 
 // Fullständiga S&P 500 topp 50 + alla 30 Dow Jones-aktier
+// Testlista — kända träffar för snabb testning
+const TEST_TICKERS = [
+  'AMD','NVDA','AAPL','MSFT','META','AMZN','GOOGL','TSLA','AVGO','ARM',
+  'NFLX','CRM','NOW','PANW','ANET','CRWD','SMCI','PLTR','HOOD','COIN'
+];
+
 // Alla S&P 500 aktier
 const SP500_SAMPLE = [
   'MMM','AOS','ABT','ABBV','ACN','ADBE','AMD','AES','AFL','A','APD','ABNB','AKAM','ALB','ARE','ALGN','ALLE','LNT','ALL','GOOGL','GOOG','MO','AMZN','AMCR','AEE','AAL','AEP','AXP','AIG','AMT','AWK','AMP','AME','AMGN','APH','ADI','ANSS','AON','APA','AAPL','AMAT','APTV','ACGL','ADM','ANET','AJG','AIZ','T','ATO','ADSK','ADP','AZO','AVB','AVY','AXON','BKR','BALL','BAC','BK','BBWI','BAX','BDX','WRB','BBY','BIO','TECH','BIIB','BLK','BX','BA','BCR','BMY','AVGO','BR','BRO','BF.B','BLDR','BG','CDNS','CZR','CPT','CPB','COF','CAH','KMX','CCL','CARR','CTLT','CAT','CBOE','CBRE','CDW','CE','COR','CNC','CNP','CF','CHRW','CRL','SCHW','CHTR','CVX','CMG','CB','CHD','CI','CINF','CTAS','CSCO','C','CFG','CLX','CME','CMS','KO','CTSH','CL','CMCSA','CMA','CAG','COP','ED','STZ','CEG','COO','CPRT','GLW','CPAY','CTVA','CSGP','COST','CTRA','CCI','CSX','CMI','CVS','DHI','DHR','DRI','DVA','DAY','DECK','DE','DAL','DVN','DXCM','FANG','DLR','DFS','DG','DLTR','D','DPZ','DOV','DOW','DHC','DTE','DUK','DD','EMN','ETN','EBAY','ECL','EIX','EW','EA','ELV','LLY','EMR','ENPH','ETR','EOG','EPAM','EQT','EFX','EQIX','EQR','ESS','EL','ETSY','EG','EVRST','ES','EXC','EXPE','EXPD','EXR','XOM','FFIV','FDS','FICO','FAST','FRT','FDX','FIS','FITB','FSLR','FE','FI','FMC','F','FTNT','FTV','FOXA','FOX','BEN','FCX','GRMN','IT','GE','GEHC','GEV','GEN','GNRC','GD','GIS','GM','GPC','GILD','GS','HAL','HIG','HAS','HCA','DOC','HSIC','HSY','HES','HPE','HLT','HOLX','HD','HON','HRL','HST','HWM','HPQ','HUBB','HUM','HBAN','HII','IBM','IEX','IDXX','ITW','INCY','IR','PODD','INTC','ICE','IFF','IP','IPG','INTU','ISRG','IVZ','INVH','IQV','IRM','JBAL','JKHY','J','JBL','JNPR','JPM','JNJ','JCI','AJG','JNPR','K','KVUE','KDP','KEY','KEYS','KMB','KIM','KMI','KLAC','KHC','KR','LHX','LH','LRCX','LW','LVS','LDOS','LEN','LKQ','LLY','LMT','L','LOW','LULU','LYB','MTB','MRO','MPC','MKTX','MAR','MMC','MLM','MAS','MA','MTCH','MKC','MCD','MCK','MDT','MRK','META','MET','MTD','MGM','MCHP','MU','MSFT','MAA','MRNA','MHK','MOH','TAP','MDLZ','MPWR','MNST','MCO','MS','MOS','MSI','MSCI','NDAQ','NTAP','NFLX','NEM','NWSA','NWS','NEE','NKE','NI','NDSN','NSC','NTRS','NOC','NCLH','NRG','NUE','NVDA','NVR','NXPI','ORLY','OXY','ODFL','OMC','ON','OKE','ORCL','OTIS','PCAR','PKG','PANW','PH','PAYX','PAYC','PYPL','PNR','PEP','PFE','PCG','PM','PSX','PNW','PXD','PNC','POOL','PPG','PPL','PFG','PG','PGR','PRU','PEG','PTC','PSA','PHM','QRVO','PWR','QCOM','DGX','RL','RJF','RTX','O','REG','REGN','RF','RSG','RMD','RVTY','ROK','ROL','ROP','ROST','RCL','SPGI','CRM','SBAC','SLB','STX','SRE','NOW','SHW','SPG','SWKS','SJM','SNA','SOLV','SO','LUV','SWK','SBUX','STT','STLD','STE','SYK','SMCI','SYF','SNPS','SYY','TMUS','TROW','TTWO','TPR','TRGP','TGT','TEL','TDY','TFX','TER','TSLA','TXN','TXT','TMO','TJX','TSCO','TT','TDG','TRV','TRMB','TFC','TYL','TSN','USB','UBER','UDR','ULTA','UNP','UAL','UPS','URI','UNH','UHS','VLO','VTR','VRSN','VRSK','VZ','VRTX','VLTO','V','VST','VNO','VMC','WRB','GWW','WAB','WBA','WMT','DIS','WBD','WM','WAT','WEC','WFC','WELL','WST','WDC','WRK','WY','WHR','WMB','WTW','WYNN','XEL','XYL','YUM','ZBRA','ZBH','ZTS'
@@ -945,11 +963,14 @@ async function runScan() {
   const days = parseInt(document.getElementById('daysInput').value) || 100;
   const volFactor = parseFloat(document.getElementById('volInput').value) || 1.5;
 
-  const all = [
-    ...SP500_SAMPLE.map(t => ({ticker: t, index: 'S&P 500', badge: 'badge-sp'})),
-    ...DOW_TICKERS.filter(t => !SP500_SAMPLE.includes(t)).map(t => ({ticker: t, index: 'DOW', badge: 'badge-dj'})),
-    ...STOCKHOLM_TICKERS.map(t => ({ticker: t, index: 'STOCKHOLM', badge: 'badge-st'}))
-  ];
+  const testMode = document.getElementById('testMode').checked;
+  const all = testMode
+    ? TEST_TICKERS.map(t => ({ticker: t, index: 'S&P 500', badge: 'badge-sp'}))
+    : [
+        ...SP500_SAMPLE.map(t => ({ticker: t, index: 'S&P 500', badge: 'badge-sp'})),
+        ...DOW_TICKERS.filter(t => !SP500_SAMPLE.includes(t)).map(t => ({ticker: t, index: 'DOW', badge: 'badge-dj'})),
+        ...STOCKHOLM_TICKERS.map(t => ({ticker: t, index: 'STOCKHOLM', badge: 'badge-st'}))
+      ];
 
   scanResults = [];
 
