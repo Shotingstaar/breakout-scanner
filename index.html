@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v3.4</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v3.5</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -737,7 +737,7 @@
     <div style="font-size:18px;line-height:1;">🤖</div>
     <div style="flex:1;">
       <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:3px;">AUTOMATISK SKANNING</div>
-      <div id="autoScanInfoText" style="font-size:11px;color:var(--muted);line-height:1.5;"></div>
+      <div id="autoScanInfoText" style="font-size:11px;color:var(--adaptive);line-height:1.5;"></div>
     </div>
     <button onclick="document.getElementById('autoScanInfoBanner').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0;line-height:1;">✕</button>
   </div>
@@ -991,6 +991,10 @@ async function runScan() {
 
   scanResults = [];
 
+  // Dölj auto-scan-bannern när manuell skanning startar
+  const autoB = document.getElementById('autoScanInfoBanner');
+  if (autoB) autoB.style.display = 'none';
+
   // Visa progress
   const progressEl = document.getElementById('scanProgress');
   const progressBar = document.getElementById('progressBar');
@@ -998,6 +1002,11 @@ async function runScan() {
   progressEl.style.display = 'block';
   progressBar.style.width = '0%';
   progressText.textContent = `0 / ${all.length} aktier`;
+
+  // Väck Render-servern (sover efter 15 min inaktivitet på free tier)
+  showApiBanner('success', '⏳ Väcker API-servern...');
+  await fetch(`${API_URL}/`).catch(() => {});
+  await delay(2000);
 
   // Testa API-anslutning först
   const apiOk = await testApiConnection();
@@ -1096,8 +1105,9 @@ function showApiBanner(type, msg) {
 // ==========================================
 async function analyzeStock(ticker, index, badge, days, volFactor) {
   try {
-    const url = `${API_URL}/stock?symbol=${ticker}&days=${days}&t=${Date.now()}`;
-    const resp = await fetch(url);
+    // Hämta alltid 300 dagar för att MA200 ska kunna beräknas
+    const url = `${API_URL}/stock?symbol=${ticker}&days=300&t=${Date.now()}`;
+    const resp = await fetch(url, { signal: AbortSignal.timeout(15000) });
     if (!resp.ok) return null;
     const json = await resp.json();
 
@@ -1264,7 +1274,10 @@ function renderResults(results) {
               <td style="padding:10px 8px;color:var(--text);opacity:0.8;">${r.index}</td>
               <td style="padding:10px 8px;color:var(--text);opacity:0.8;">${r.dateStr||''}</td>
               <td style="padding:10px 8px;color:var(--green);">$${r.price}</td>
-              <td style="padding:10px 8px;color:${parseFloat(r.change)>=0?'var(--green)':'var(--red)'};">${parseFloat(r.change)>=0?'▲':'▼'} ${r.change}%</td>
+              <td style="padding:10px 8px;color:${parseFloat(r.change)>=0?'var(--green)':'var(--red)'};">
+                ${parseFloat(r.change)>=0?'▲':'▼'} ${r.change}%
+                ${r.isOld || r.dateStr ? '<div style="font-size:9px;color:var(--muted);margin-top:2px;">vid breakout</div>' : ''}
+              </td>
               <td style="padding:10px 8px;">
                 <div style="font-size:10px;color:var(--text);">${r.sector||'-'}</div>
                 <div style="font-size:11px;">${r.sector_bullish===true ? '🟢 Bullish' : r.sector_bullish===false ? '🔴 Bearish' : '⚪ -'}</div>
