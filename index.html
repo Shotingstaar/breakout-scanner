@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v3.1</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v3.2</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -708,6 +708,11 @@
   </div>
 
   <!-- Results -->
+  <!-- Manual scan trigger button -->
+  <button onclick="triggerBackendScan()" style="width:100%;padding:12px;margin-bottom:10px;background:transparent;border:1px solid var(--accent);border-radius:10px;color:var(--accent);font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;">
+    ⚡ KÖR AUTOMATISK SKANNING PÅ SERVER
+  </button>
+
   <!-- History & Download buttons -->
   <div style="display:flex;gap:8px;margin-bottom:16px;">
     <button onclick="showHistory()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;">
@@ -1170,6 +1175,7 @@ function renderResults(results) {
             <th style="padding:10px 8px;">Datum</th>
             <th style="padding:10px 8px;">Pris</th>
             <th style="padding:10px 8px;">Förändring</th>
+            <th style="padding:10px 8px;">Sektor</th>
             <th style="padding:10px 8px;">MA50</th>
             <th style="padding:10px 8px;">MA200</th>
             <th style="padding:10px 8px;">RSI</th>
@@ -1191,6 +1197,10 @@ function renderResults(results) {
               </td>
               <td style="padding:10px 8px;color:var(--text);opacity:0.8;">${r.index}</td>
               <td style="padding:10px 8px;color:var(--text);opacity:0.8;">${r.dateStr||''}</td>
+              <td style="padding:10px 8px;">
+                <div style="font-size:10px;color:var(--text);">${r.sector||'-'}</div>
+                <div style="font-size:11px;">${r.sector_bullish===true ? '🟢 Bullish' : r.sector_bullish===false ? '🔴 Bearish' : '⚪ -'}</div>
+              </td>
               <td style="padding:10px 8px;color:var(--green);">$${r.price}</td>
               <td style="padding:10px 8px;color:${parseFloat(r.change)>=0?'var(--green)':'var(--red)'};">${parseFloat(r.change)>=0?'▲':'▼'} ${r.change}%</td>
               <td style="padding:10px 8px;font-weight:700;color:${r.ma50_pct>=0?'var(--green)':'var(--red)'};">
@@ -1646,6 +1656,8 @@ async function loadLatestScan() {
           macd:      r.macd,
           macd_hist: r.macd_hist,
           atr:       r.atr,
+          sector:    r.sector,
+          sector_bullish: r.sector_bullish,
           priceHistory: [],
           avanzaUrl: `https://www.avanza.se/aktier/lista.html#searchQuery=${r.ticker}`
         };
@@ -1702,6 +1714,20 @@ async function findOnAvanza(ticker) {
     avanzaCache[ticker] = {found: false};
   }
   return avanzaCache[ticker];
+}
+
+// ==========================================
+// TRIGGER BACKEND SCAN
+// ==========================================
+async function triggerBackendScan() {
+  showApiBanner('success', '⚡ Startar skanning på servern — klar om ca 15 minuter...');
+  try {
+    const resp = await fetch(`${API_URL}/trigger_scan`);
+    const json = await resp.json();
+    showApiBanner('success', `⚡ ${json.message || 'Skanning startad!'} Ladda om appen om 15 min.`);
+  } catch(e) {
+    showApiBanner('error', '❌ Kunde inte starta skanning — försök igen');
+  }
 }
 
 // ==========================================
