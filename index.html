@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v3.3</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v3.4</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -730,6 +730,16 @@
       <button onclick="document.getElementById('historyPanel').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">✕</button>
     </div>
     <div id="historyList"><div style="color:var(--muted);font-size:11px;text-align:center;padding:20px;">Laddar historik...</div></div>
+  </div>
+
+  <!-- Auto-scan info banner — visas när resultat laddas från databasen -->
+  <div id="autoScanInfoBanner" style="display:none;align-items:flex-start;gap:10px;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+    <div style="font-size:18px;line-height:1;">🤖</div>
+    <div style="flex:1;">
+      <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:3px;">AUTOMATISK SKANNING</div>
+      <div id="autoScanInfoText" style="font-size:11px;color:var(--muted);line-height:1.5;"></div>
+    </div>
+    <button onclick="document.getElementById('autoScanInfoBanner').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0;line-height:1;">✕</button>
   </div>
 
   <div class="results-header">
@@ -1086,8 +1096,7 @@ function showApiBanner(type, msg) {
 // ==========================================
 async function analyzeStock(ticker, index, badge, days, volFactor) {
   try {
-    // Render backend (yfinance — aktuell data)
-    const url = `https://breakout-api-d8fh.onrender.com/stock?symbol=${ticker}&days=${days}&t=${Date.now()}`;
+    const url = `${API_URL}/stock?symbol=${ticker}&days=${days}&t=${Date.now()}`;
     const resp = await fetch(url);
     if (!resp.ok) return null;
     const json = await resp.json();
@@ -1098,31 +1107,35 @@ async function analyzeStock(ticker, index, badge, days, volFactor) {
     const highs      = json.highs;
     const volumes    = json.volumes;
     const timestamps = json.timestamps;
-    const n = closes.length;
 
-    const todayClose     = closes[0]; // nyast först
-    const todayVol       = volumes[0]; // nyast först
-    const todayTimestamp = timestamps[0]; // nyast först
-    const prevClose      = closes[1]; // igår
-    const changePct      = ((todayClose - prevClose) / prevClose * 100);
+    const todayClose = closes[0];
+    const todayVol   = volumes[0];
+    const prevClose  = closes[1];
+    const changePct  = ((todayClose - prevClose) / prevClose * 100);
 
-    // Kontrollera hur gammal datan är
-    const dataDate = new Date(todayTimestamp * 1000);
+    const dataDate = new Date(timestamps[0] * 1000);
     const now      = new Date();
     const diffDays = Math.floor((now - dataDate) / (1000 * 3600 * 24));
     const dateStr  = json.dates ? json.dates[0] : dataDate.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
     const isOld    = diffDays > 3;
 
-    // Jämför stängningspris mot tidigare stängningspriser (inte high)
-    // Detta fångar breakouts som AMD igår där close > alla tidigare closes
-    const lookbackCloses = closes.slice(1, days + 1); // hoppa över idag
+    const lookbackCloses = closes.slice(1, days + 1);
     const high100 = Math.max(...lookbackCloses);
-
-    const last20vols = volumes.slice(1, 21); // hoppa över idag
+    const last20vols = volumes.slice(1, 21);
     const avgVol = last20vols.reduce((s, v) => s + v, 0) / last20vols.length;
 
     if (todayClose <= high100) return null;
     if (todayVol < avgVol * volFactor) return null;
+
+    // Beräkna tekniska indikatorer i frontend
+    const rsi      = calcRSI(closes);
+    const ma50     = calcMA(closes, 50);
+    const ma200    = calcMA(closes, 200);
+    const ma50_pct  = ma50  ? +((todayClose - ma50)  / ma50  * 100).toFixed(1) : null;
+    const ma200_pct = ma200 ? +((todayClose - ma200) / ma200 * 100).toFixed(1) : null;
+    const [macd, macd_hist] = calcMACD(closes);
+    const atr      = calcATR(highs, closes, 14);
+    const sector   = TICKER_SECTORS[ticker] || null;
 
     const priceHistory = closes.slice(1, days + 1).reverse().map(c => +c.toFixed(2));
     priceHistory.push(+todayClose.toFixed(2));
@@ -1132,20 +1145,73 @@ async function analyzeStock(ticker, index, badge, days, volFactor) {
       price:    todayClose.toFixed(2),
       high100:  high100.toFixed(2),
       change:   changePct.toFixed(2),
-      avgVol,
-      todayVol,
+      avgVol, todayVol,
       volRatio: todayVol / avgVol,
-      priceHistory,
-      days,
-      dateStr,
-      diffDays,
-      isOld
+      priceHistory, days, dateStr, diffDays, isOld,
+      rsi, ma50, ma200, ma50_pct, ma200_pct,
+      macd, macd_hist, atr,
+      sector,
+      sector_bullish: null,
+      styrka: todayVol / avgVol
     };
 
   } catch (err) {
     console.warn(`Fel vid hämtning av ${ticker}:`, err);
     return null;
   }
+}
+
+// ==========================================
+// TEKNISKA INDIKATORER (frontend-beräkning)
+// ==========================================
+function calcMA(closes, period) {
+  if (closes.length < period) return null;
+  return +( closes.slice(0, period).reduce((s, v) => s + v, 0) / period ).toFixed(2);
+}
+
+function calcRSI(closes, period = 14) {
+  if (closes.length < period + 1) return null;
+  const prices = closes.slice(0, period + 10).reverse();
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= period; i++) {
+    const d = prices[i] - prices[i - 1];
+    if (d > 0) gains += d; else losses -= d;
+  }
+  let ag = gains / period, al = losses / period;
+  for (let i = period; i < prices.length - 1; i++) {
+    const d = prices[i + 1] - prices[i];
+    ag = (ag * (period - 1) + Math.max(d, 0)) / period;
+    al = (al * (period - 1) + Math.max(-d, 0)) / period;
+  }
+  if (al === 0) return 100;
+  return +(100 - 100 / (1 + ag / al)).toFixed(1);
+}
+
+function calcMACD(closes) {
+  if (closes.length < 35) return [null, null];
+  const prices = closes.slice(0, 35).reverse();
+  const ema = (data, p) => {
+    const k = 2 / (p + 1);
+    let v = data.slice(0, p).reduce((s, x) => s + x, 0) / p;
+    for (let i = p; i < data.length; i++) v = data[i] * k + v * (1 - k);
+    return v;
+  };
+  const macdLine = +(ema(prices, 12) - ema(prices, 26)).toFixed(2);
+  const signal   = +(macdLine * 0.9).toFixed(2);
+  return [macdLine, +(macdLine - signal).toFixed(2)];
+}
+
+function calcATR(highs, closes, period = 14) {
+  if (highs.length < period + 1) return null;
+  let trs = [];
+  for (let i = 0; i < period; i++) {
+    trs.push(Math.max(
+      highs[i] - closes[i + 1],
+      Math.abs(highs[i] - closes[i + 1]),
+      Math.abs(closes[i] - closes[i + 1])
+    ));
+  }
+  return +(trs.reduce((s, v) => s + v, 0) / period).toFixed(2);
 }
 
 // ==========================================
@@ -1197,12 +1263,12 @@ function renderResults(results) {
               </td>
               <td style="padding:10px 8px;color:var(--text);opacity:0.8;">${r.index}</td>
               <td style="padding:10px 8px;color:var(--text);opacity:0.8;">${r.dateStr||''}</td>
+              <td style="padding:10px 8px;color:var(--green);">$${r.price}</td>
+              <td style="padding:10px 8px;color:${parseFloat(r.change)>=0?'var(--green)':'var(--red)'};">${parseFloat(r.change)>=0?'▲':'▼'} ${r.change}%</td>
               <td style="padding:10px 8px;">
                 <div style="font-size:10px;color:var(--text);">${r.sector||'-'}</div>
                 <div style="font-size:11px;">${r.sector_bullish===true ? '🟢 Bullish' : r.sector_bullish===false ? '🔴 Bearish' : '⚪ -'}</div>
               </td>
-              <td style="padding:10px 8px;color:var(--green);">$${r.price}</td>
-              <td style="padding:10px 8px;color:${parseFloat(r.change)>=0?'var(--green)':'var(--red)'};">${parseFloat(r.change)>=0?'▲':'▼'} ${r.change}%</td>
               <td style="padding:10px 8px;font-weight:700;color:${r.ma50_pct>=0?'var(--green)':'var(--red)'};">
                 $${r.ma50||'-'}<br><span style="font-size:10px;">${r.ma50_pct!=null?(r.ma50_pct>0?'+':'')+r.ma50_pct+'%':'-'}</span>
               </td>
@@ -1669,8 +1735,16 @@ async function loadLatestScan() {
       renderResults(scanResults);
       document.getElementById('resultsCount').textContent = `${scanResults.length} hittade`;
       const scanDate = json.results[0]?.scan_date || '';
+      const scanTime = json.results[0]?.scan_time?.slice(0,5) || '';
       document.getElementById('lastScan').textContent = `Senaste autoskanning: ${scanDate}`;
-      showApiBanner('success', `✅ Automatisk skanning ${scanDate} — ${json.count} träffar`);
+
+      // Visa tydlig banner som förklarar att dessa är från auto-skanningen
+      const autoInfoBanner = document.getElementById('autoScanInfoBanner');
+      if (autoInfoBanner) {
+        autoInfoBanner.style.display = 'flex';
+        document.getElementById('autoScanInfoText').textContent =
+          `Visar automatisk skanning från ${scanDate} kl ${scanTime} — ${json.count} breakouts hittade. Kör en ny skanning för att uppdatera.`;
+      }
     }
   } catch(e) {
     console.log('Ingen auto-scan data ännu');
