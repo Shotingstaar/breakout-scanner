@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v2.7</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v2.8</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -1173,13 +1173,17 @@ function renderResults(results) {
             <th style="padding:10px 8px;">${scanMode === 'consol' ? 'Konsol. tak' : (results[0]?.days||100)+'D Högsta'}</th>
             <th style="padding:10px 8px;">Volym idag</th>
             <th style="padding:10px 8px;">Vol-faktor</th>
+            <th style="padding:10px 8px;">Styrka</th>
             <th style="padding:10px 8px;">Avanza</th>
           </tr>
         </thead>
         <tbody>
           ${results.map((r, i) => `
             <tr style="border-bottom:1px solid var(--border);background:${i%2===0?'var(--surface)':'var(--surface2)'};">
-              <td style="padding:10px 8px;color:var(--accent);font-weight:700;">${r.ticker}</td>
+              <td style="padding:10px 8px;">
+                <div style="color:var(--accent);font-weight:700;">${r.ticker}</div>
+                ${r.isConsol ? '<div style="font-size:9px;color:var(--green);letter-spacing:1px;">📦 KONSOL</div>' : '<div style="font-size:9px;color:var(--accent2);letter-spacing:1px;">🚨 BREAKOUT</div>'}
+              </td>
               <td style="padding:10px 8px;color:var(--muted);">${r.index}</td>
               <td style="padding:10px 8px;color:var(--muted);">${r.dateStr||''}</td>
               <td style="padding:10px 8px;color:var(--green);">$${r.price}</td>
@@ -1188,6 +1192,9 @@ function renderResults(results) {
               <td style="padding:10px 8px;">${formatVol(r.todayVol)}</td>
               <td style="padding:10px 8px;color:${r.volRatio>=3?'#ff6b35':r.volRatio>=2?'var(--gold)':'var(--green)'};">
                 ${r.volRatio>=3?'🔥':r.volRatio>=2?'⚡':'✅'} ${r.volRatio.toFixed(2)}×
+              </td>
+              <td style="padding:10px 8px;font-weight:700;color:${r.styrka >= 4 ? '#ff6b35' : r.styrka >= 3 ? 'var(--gold)' : 'var(--green)'};">
+                ${r.styrka ? r.styrka.toFixed(1) : '-'}
               </td>
               <td style="padding:10px 8px;">
                 <div style="display:flex;gap:4px;">
@@ -1219,7 +1226,10 @@ function renderResults(results) {
           <div class="stock-ticker">${r.ticker}</div>
           <div class="stock-name" style="color:var(--adaptive)">${r.index}</div>
         </div>
-        <div class="stock-index-badge ${r.badge}">${r.index}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <div class="stock-index-badge ${r.badge}">${r.index}</div>
+          ${r.isConsol ? '<div style="font-size:9px;color:var(--green);font-weight:700;letter-spacing:1px;border:1px solid rgba(0,255,136,0.4);border-radius:4px;padding:2px 6px;">📦 KONSOL</div>' : '<div style="font-size:9px;color:var(--accent2);font-weight:700;letter-spacing:1px;border:1px solid rgba(255,107,53,0.4);border-radius:4px;padding:2px 6px;">🚨 BREAKOUT</div>'}
+        </div>
       </div>
 
       ${r.isOld ? `<div style="background:rgba(255,107,53,0.1);border:1px solid rgba(255,107,53,0.3);border-radius:6px;padding:7px 10px;margin-bottom:8px;font-size:10px;color:#ff6b35;">⚠️ Gammal data — breakout skedde ${r.dateStr} (${r.diffDays} dagar sedan)</div>` : ''}
@@ -1584,28 +1594,43 @@ async function loadLatestScan() {
     const resp = await fetch(`${API_URL}/latest_scan`);
     const json = await resp.json();
     if (json.results && json.results.length > 0) {
-      // Visa resultaten direkt
-      scanResults = json.results.map(r => ({
-        ticker:   r.ticker,
-        index:    r.index,
-        badge:    r.index === 'DOW' ? 'badge-dj' : 'badge-sp',
-        price:    r.price?.toFixed(2),
-        high100:  r.high100?.toFixed(2),
-        change:   r.change?.toFixed(2),
-        avgVol:   r.avgVol,
-        todayVol: r.todayVol,
-        volRatio: r.volRatio,
-        days:     r.days,
-        dateStr:  r.scan_date,
-        isOld:    false,
-        priceHistory: [],
-        avanzaUrl: `https://www.avanza.se/ab/sok/inline?query=${r.ticker}`
-      }));
+
+      // Beräkna styrkepoäng för varje aktie
+      // Konsolidering får bonuspoäng (1.3x) eftersom det är starkare signal
+      const mapped = json.results.map(r => {
+        const isConsol = r.scan_mode === 'consol';
+        const consolBonus = isConsol ? 1.3 : 1.0;
+        const changeFactor = Math.max(0, r.change || 0) / 10; // normalisera förändring
+        const styrka = (r.volRatio * consolBonus) + changeFactor;
+
+        return {
+          ticker:    r.ticker,
+          index:     r.index,
+          badge:     r.index === 'DOW' ? 'badge-dj' : 'badge-sp',
+          price:     r.price?.toFixed(2),
+          high100:   r.high100?.toFixed(2),
+          change:    r.change?.toFixed(2),
+          avgVol:    r.avgVol,
+          todayVol:  r.todayVol,
+          volRatio:  r.volRatio,
+          days:      r.days,
+          dateStr:   r.scan_date,
+          isOld:     false,
+          isConsol:  isConsol,
+          styrka:    styrka,
+          priceHistory: [],
+          avanzaUrl: `https://www.avanza.se/ab/sok/inline?query=${r.ticker}`
+        };
+      });
+
+      // Sortera på styrka — högst potential överst
+      scanResults = mapped.sort((a, b) => b.styrka - a.styrka);
+
       renderResults(scanResults);
       document.getElementById('resultsCount').textContent = `${scanResults.length} hittade`;
-      document.getElementById('lastScan').textContent = 
-        `Senaste autoskanning: ${r.scan_date} kl ${r.scan_time?.substring(0,5)}`;
-      showApiBanner('success', `✅ Automatisk skanning ${json.scan_date} — ${json.count} breakouts`);
+      const scanDate = json.results[0]?.scan_date || '';
+      document.getElementById('lastScan').textContent = `Senaste autoskanning: ${scanDate}`;
+      showApiBanner('success', `✅ Automatisk skanning ${scanDate} — ${json.count} träffar`);
     }
   } catch(e) {
     console.log('Ingen auto-scan data ännu');
