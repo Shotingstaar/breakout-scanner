@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v2.9</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v3.0</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -1173,6 +1173,7 @@ function renderResults(results) {
             <th style="padding:10px 8px;">${scanMode === 'consol' ? 'Konsol. tak' : (results[0]?.days||100)+'D Högsta'}</th>
             <th style="padding:10px 8px;">Volym idag</th>
             <th style="padding:10px 8px;">Vol-faktor</th>
+            <th style="padding:10px 8px;">RSI</th>
             <th style="padding:10px 8px;">Styrka</th>
             <th style="padding:10px 8px;">Avanza</th>
           </tr>
@@ -1193,12 +1194,16 @@ function renderResults(results) {
               <td style="padding:10px 8px;color:${r.volRatio>=3?'#ff6b35':r.volRatio>=2?'var(--gold)':'var(--green)'};">
                 ${r.volRatio>=3?'🔥':r.volRatio>=2?'⚡':'✅'} ${r.volRatio.toFixed(2)}×
               </td>
+              <td style="padding:10px 8px;font-weight:700;color:${r.rsi >= 80 ? 'var(--red)' : r.rsi >= 70 ? '#ff6b35' : r.rsi >= 60 ? 'var(--gold)' : 'var(--green)'};">
+                ${r.rsi ? r.rsi.toFixed(0) : '-'}
+                ${r.rsi >= 70 ? ' ⚠️' : ''}
+              </td>
               <td style="padding:10px 8px;font-weight:700;color:${r.styrka >= 4 ? '#ff6b35' : r.styrka >= 3 ? 'var(--gold)' : 'var(--green)'};">
                 ${r.styrka ? r.styrka.toFixed(1) : '-'}
               </td>
               <td style="padding:10px 8px;">
                 <div style="display:flex;gap:4px;">
-                  <a href="https://www.avanza.se/ab/sok/inline?query=${r.ticker}" target="_blank" style="color:var(--gold);text-decoration:none;border:1px solid var(--gold);border-radius:4px;padding:3px 6px;font-size:10px;">AZ</a>
+                  <a href="https://www.avanza.se/aktier/lista.html#searchQuery=${r.ticker}" target="_blank" style="color:var(--gold);text-decoration:none;border:1px solid var(--gold);border-radius:4px;padding:3px 6px;font-size:10px;">AZ</a>
                   <a href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank" style="color:var(--accent);text-decoration:none;border:1px solid var(--accent);border-radius:4px;padding:3px 6px;font-size:10px;">TV</a>
                 </div>
               </td>
@@ -1293,7 +1298,7 @@ function renderResults(results) {
       </div>
 
       <div style="display:flex;gap:8px;margin-top:10px;">
-        <a href="https://www.avanza.se/ab/sok/inline?query=${r.ticker}" target="_blank" style="flex:1;display:block;text-align:center;padding:8px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:8px;color:var(--gold);text-decoration:none;font-size:11px;font-weight:700;">💛 Avanza</a>
+        <a href="https://www.avanza.se/aktier/lista.html#searchQuery=${r.ticker}" target="_blank" style="flex:1;display:block;text-align:center;padding:8px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:8px;color:var(--gold);text-decoration:none;font-size:11px;font-weight:700;">💛 Avanza</a>
         <a href="https://www.tradingview.com/chart/?symbol=${r.ticker}" target="_blank" style="flex:1;display:block;text-align:center;padding:8px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.25);border-radius:8px;color:var(--accent);text-decoration:none;font-size:11px;font-weight:700;">📈 TradingView</a>
       </div>
 
@@ -1618,8 +1623,9 @@ async function loadLatestScan() {
           isOld:     false,
           isConsol:  isConsol,
           styrka:    styrka,
+          rsi:       r.rsi,
           priceHistory: [],
-          avanzaUrl: `https://www.avanza.se/ab/sok/inline?query=${r.ticker}`
+          avanzaUrl: `https://www.avanza.se/aktier/lista.html#searchQuery=${r.ticker}`
         };
       });
 
