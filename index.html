@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v4.4</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v4.5</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -1083,13 +1083,25 @@ async function runScan() {
         const json = await resp.json();
         for (const r of (json.results || [])) {
           const stock = batch.find(s => s.ticker === r.ticker) || {};
+          // Hämta live-pris och dagens faktiska förändring
+          let livePrice  = r.price;
+          let liveChange = r.change_pct;
+          try {
+            const q = await fetch(`${API_URL}/quote?symbol=${r.ticker}`);
+            if (q.ok) {
+              const qj = await q.json();
+              if (qj.price)                livePrice  = qj.price;
+              if (qj.change_pct !== undefined) liveChange = qj.change_pct;
+            }
+          } catch(e) {}
+
           scanResults.push({
             ticker:         r.ticker,
             index:          r.index,
             badge:          r.index === 'DOW' ? 'badge-dj' : r.index === 'STOCKHOLM' ? 'badge-st' : 'badge-sp',
-            price:          r.price.toFixed(2),
+            price:          parseFloat(livePrice).toFixed(2),
             high100:        r.high100.toFixed(2),
-            change:         r.change_pct.toFixed(2),
+            change:         parseFloat(liveChange).toFixed(2),
             avgVol:         r.avg_vol,
             todayVol:       r.today_vol,
             volRatio:       r.vol_ratio,
@@ -1097,7 +1109,7 @@ async function runScan() {
             days,
             dateStr:        r.date,
             diffDays:       r.diff_days || 0,
-            isOld:          (r.diff_days || 0) > 3,
+            isOld:          false,
             isConsol:       r.scan_mode === 'consol',
             rsi:            r.rsi,
             ma50:           r.ma50,
@@ -1369,7 +1381,6 @@ function renderResults(results) {
               <td style="padding:10px 8px;color:var(--green);">$${r.price}</td>
               <td style="padding:10px 8px;color:${parseFloat(r.change)>=0?'var(--green)':'var(--red)'};">
                 ${parseFloat(r.change)>=0?'▲':'▼'} ${r.change}%
-                ${r.isOld || r.dateStr ? '<div style="font-size:9px;color:var(--muted);margin-top:2px;">vid breakout</div>' : ''}
               </td>
               <td style="padding:10px 8px;">
                 <div style="font-size:10px;color:var(--text);">${r.sector||'-'}</div>
