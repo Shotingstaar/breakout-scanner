@@ -562,7 +562,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.7</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.8</span></div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span id="apiVersionBadge" style="font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;letter-spacing:1px;">API v-.-</span>
       <div class="market-status" style="color:var(--adaptive)">
@@ -613,6 +613,9 @@
       </button>
       <button id="tab-consol" onclick="setMode('consol')" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer;">
         📦 KONSOLIDERING
+      </button>
+      <button id="tab-pre" onclick="setMode('pre_breakout')" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; cursor:pointer;">
+        🎯 PRE-BREAK
       </button>
     </div>
 
@@ -817,25 +820,28 @@ function setMode(mode) {
   scanMode = mode;
   const breakoutBtn = document.getElementById('tab-breakout');
   const consolBtn   = document.getElementById('tab-consol');
+  const preBtn      = document.getElementById('tab-pre');
   const consolSettings = document.getElementById('consolSettings');
-  const breakoutSettings = document.querySelectorAll('.breakout-only');
+
+  // Återställ alla
+  [breakoutBtn, consolBtn, preBtn].forEach(btn => {
+    if (btn) { btn.style.background = 'transparent'; btn.style.color = 'var(--muted)'; btn.style.borderColor = 'var(--border)'; }
+  });
+  consolSettings.style.display = 'none';
 
   if (mode === 'breakout') {
     breakoutBtn.style.background = 'var(--accent)';
     breakoutBtn.style.color = 'var(--bg)';
     breakoutBtn.style.borderColor = 'var(--accent)';
-    consolBtn.style.background = 'transparent';
-    consolBtn.style.color = 'var(--muted)';
-    consolBtn.style.borderColor = 'var(--border)';
-    consolSettings.style.display = 'none';
-  } else {
+  } else if (mode === 'consol') {
     consolBtn.style.background = 'var(--green)';
     consolBtn.style.color = 'var(--bg)';
     consolBtn.style.borderColor = 'var(--green)';
-    breakoutBtn.style.background = 'transparent';
-    breakoutBtn.style.color = 'var(--muted)';
-    breakoutBtn.style.borderColor = 'var(--border)';
     consolSettings.style.display = 'block';
+  } else if (mode === 'pre_breakout') {
+    preBtn.style.background = '#a855f7';
+    preBtn.style.color = 'var(--bg)';
+    preBtn.style.borderColor = '#a855f7';
   }
 }
 
@@ -1151,6 +1157,7 @@ async function runScan() {
           scanResults.push({
             ticker:         r.ticker,
             index:          r.index,
+            scan_mode:      r.scan_mode,
             badge:          r.index === 'DOW' ? 'badge-dj' : ['Large','Mid','Small','STOCKHOLM'].includes(r.index) ? 'badge-st' : 'badge-sp',
             price:          parseFloat(livePrice).toFixed(2),
             high100:        r.high100.toFixed(2),
@@ -1428,7 +1435,7 @@ function renderResults(results) {
             <tr style="border-bottom:1px solid var(--border);background:${i%2===0?'var(--surface)':'var(--surface2)'};">
               <td style="padding:10px 8px;">
                 <div style="color:var(--accent);font-weight:700;">${r.ticker}</div>
-                ${r.isConsol ? '<div style="font-size:9px;color:var(--green);letter-spacing:1px;">📦 KONSOL</div>' : '<div style="font-size:9px;color:var(--accent2);letter-spacing:1px;">🚨 BREAKOUT</div>'}
+                ${r.scan_mode === 'pre_breakout' ? '<div style="font-size:9px;color:#a855f7;letter-spacing:1px;">🎯 PRE-BREAK</div>' : r.isConsol ? '<div style="font-size:9px;color:var(--green);letter-spacing:1px;">📦 KONSOL</div>' : '<div style="font-size:9px;color:var(--accent2);letter-spacing:1px;">🚨 BREAKOUT</div>'}
               </td>
               <td style="padding:10px 8px;color:var(--text);opacity:0.8;">${r.index}</td>
               <td style="padding:10px 8px;color:var(--text);opacity:0.8;">${r.dateStr||''}</td>
@@ -2182,7 +2189,7 @@ function downloadExcel() {
 
   const rows = scanResults.map(r => [
     r.ticker,
-    r.isConsol ? 'KONSOLIDERING' : 'BREAKOUT',
+    r.scan_mode === 'pre_breakout' ? 'PRE-BREAKOUT' : r.isConsol ? 'KONSOLIDERING' : 'BREAKOUT',
     r.index,
     r.dateStr || today,
     parseFloat(r.price) || '',
