@@ -562,7 +562,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.4</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.6</span></div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span id="apiVersionBadge" style="font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;letter-spacing:1px;">API v-.-</span>
       <div class="market-status" style="color:var(--adaptive)">
@@ -654,6 +654,17 @@
       </label>
     </div>
 
+    <div class="control-row">
+      <div>
+        <div class="control-label" style="color:var(--text)">Inkludera Small Cap</div>
+        <div class="control-sub" style="color:var(--adaptive)">Stockholmsbörsen Small Cap</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="smallCapToggle">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+
     <!-- Consolidation settings (hidden by default) -->
     <div id="consolSettings" style="display:none; border-top:1px solid var(--border); padding-top:14px; margin-top:4px;">
       <div class="control-row">
@@ -672,9 +683,7 @@
       </div>
     </div>
 
-    <button onclick="debugAMD()" style="width:100%; padding:10px; margin-bottom:8px; background:transparent; border:1px solid var(--accent2); border-radius:10px; color:var(--accent2); font-family:'Space Mono',monospace; font-size:11px; cursor:pointer;">
-      🔍 DEBUGGA AMD
-    </button>
+
 
     <div style="display:flex;gap:10px;">
       <div class="control-row" style="margin-bottom:12px;">
@@ -853,8 +862,7 @@ const DOW_TICKERS = [
 ];
 
 // Stockholmsbörsen Large Cap + Mid Cap
-const STOCKHOLM_TICKERS = [
-  // Large Cap
+const STOCKHOLM_LARGE = [
   'ERIC-B.ST','VOLV-B.ST','SAND.ST','SEB-A.ST','SWED-A.ST','HM-B.ST',
   'ATCO-A.ST','ATCO-B.ST','SCA-B.ST','SKF-B.ST','SSAB-A.ST','SSAB-B.ST',
   'INVE-A.ST','INVE-B.ST','NDA-SE.ST','ALFA.ST','ALIV-SDB.ST','ASSA-B.ST',
@@ -863,8 +871,10 @@ const STOCKHOLM_TICKERS = [
   'INDU-A.ST','KINV-B.ST','LATO-B.ST','LIFCO-B.ST','LOOMIS.ST','LUNDBERGF.ST',
   'NIBE-B.ST','NOKI-FI.ST','PEAB-B.ST','SAGA-B.ST','SAAB-B.ST','SECU-B.ST',
   'SKA-B.ST','SOBI.ST','SWMA.ST','TELE2-B.ST','TELIA.ST','THULE.ST',
-  'TOBII.ST','TREL-B.ST','VNE.ST','WALL-B.ST','WIHL.ST','XANO-B.ST',
-  // Mid Cap
+  'TOBII.ST','TREL-B.ST','VNE.ST','WALL-B.ST','WIHL.ST','XANO-B.ST'
+];
+
+const STOCKHOLM_MID = [
   'AAK.ST','ADDV-B.ST','ALIG.ST','AMBEA.ST','ANOT.ST','AXFO.ST',
   'BEIA-B.ST','BERG-B.ST','BILI-A.ST','BIOG-B.ST','BOOZT.ST','BUFAB.ST',
   'BULL.ST','CATE.ST','COLL.ST','DIOS.ST','DUNI.ST','ELUX-B.ST',
@@ -876,6 +886,28 @@ const STOCKHOLM_TICKERS = [
   'SFAB.ST','SGRO.ST','SHOT.ST','SINCH.ST','SWECO-B.ST','SYSR.ST',
   'TROAX.ST','VBG-B.ST','VITR.ST','VOLCAR-B.ST','XVIVO.ST','ZOUND.ST'
 ];
+
+const STOCKHOLM_SMALL = [
+  'ACOU.ST','ADDT-B.ST','AGES-B.ST','AGRO.ST','AINO.ST','ALCA.ST',
+  'ALIF-B.ST','ALPH.ST','ALTS-B.ST','ANGL.ST','AOIL.ST','APRNK.ST',
+  'ARCK.ST','ARCT.ST','AREN.ST','AROV.ST','ARTI.ST','ATRLJ-B.ST',
+  'AVAV.ST','AVEG-B.ST','AXIC-A.ST','BEAM.ST','BEGR.ST','BFAB.ST',
+  'BIOT.ST','BIPC.ST','BNOX.ST','BONG.ST','BRIN-B.ST','BURE.ST',
+  'CARL-B.ST','CEVI.ST','CFISH.ST','CINT.ST','COOR.ST','CORE-B.ST',
+  'CRED-A.ST','CSEC.ST','CTM.ST','DEDI.ST','DFAB.ST','DIGI.ST',
+  'DIST.ST','DOMN.ST','DORO.ST','DPLAY.ST','DRIL.ST','ELOS-B.ST',
+  'EMBA-B.ST','EMPIR-B.ST','EOLU-B.ST','EPAC.ST','EPED.ST','EQTEC.ST',
+  'ERMA.ST','EUCI.ST','EVOJ-B.ST','EXEN.ST','FABG.ST','FING-B.ST',
+  'FIRE.ST','FLAT-B.ST','FNOX.ST','FORB.ST','FORE.ST','FREE.ST',
+  'FWOR.ST','GCOR.ST','GENI.ST','GIAB.ST','GILD.ST','GRAN.ST',
+  'GRNG.ST','GULD.ST','HEBA-B.ST','HELIO.ST','HEND.ST','HIHI.ST',
+  'HLDS.ST','HMSO-B.ST','HOLM-B.ST','HORA.ST','HPOL-B.ST','HTRO.ST',
+  'HUGI.ST','IBOX.ST','IGAB.ST','IMMU.ST','IMPL.ST','IMPC.ST',
+  'INAC.ST','INDT.ST','INISS-B.ST','INSP.ST','INVE-B.ST','IORD.ST'
+];
+
+// Bakåtkompatibelt alias
+const STOCKHOLM_TICKERS = [...STOCKHOLM_LARGE, ...STOCKHOLM_MID];
 
 let autoTimer = null;
 let notifGranted = false;
@@ -1033,13 +1065,16 @@ async function runScan() {
   const days = parseInt(document.getElementById('daysInput').value) || 100;
   const volFactor = parseFloat(document.getElementById('volInput').value) || 1.5;
 
-  const testMode = document.getElementById('testMode').checked;
+  const testMode     = document.getElementById('testMode').checked;
+  const includeSmall = document.getElementById('smallCapToggle')?.checked || false;
   const all = testMode
     ? TEST_TICKERS.map(t => ({ticker: t, index: 'S&P 500', badge: 'badge-sp'}))
     : [
-        ...SP500_SAMPLE.map(t => ({ticker: t, index: 'S&P 500', badge: 'badge-sp'})),
-        ...DOW_TICKERS.filter(t => !SP500_SAMPLE.includes(t)).map(t => ({ticker: t, index: 'DOW', badge: 'badge-dj'})),
-        ...STOCKHOLM_TICKERS.map(t => ({ticker: t, index: 'STOCKHOLM', badge: 'badge-st'}))
+        ...SP500_SAMPLE.map(t    => ({ticker: t, index: 'S&P 500', badge: 'badge-sp'})),
+        ...DOW_TICKERS.filter(t  => !SP500_SAMPLE.includes(t)).map(t => ({ticker: t, index: 'DOW',   badge: 'badge-dj'})),
+        ...STOCKHOLM_LARGE.map(t => ({ticker: t, index: 'Large',   badge: 'badge-st'})),
+        ...STOCKHOLM_MID.map(t   => ({ticker: t, index: 'Mid',     badge: 'badge-st'})),
+        ...(includeSmall ? STOCKHOLM_SMALL.map(t => ({ticker: t, index: 'Small', badge: 'badge-st'})) : [])
       ];
 
   scanResults = [];
@@ -1116,7 +1151,7 @@ async function runScan() {
           scanResults.push({
             ticker:         r.ticker,
             index:          r.index,
-            badge:          r.index === 'DOW' ? 'badge-dj' : r.index === 'STOCKHOLM' ? 'badge-st' : 'badge-sp',
+            badge:          r.index === 'DOW' ? 'badge-dj' : ['Large','Mid','Small','STOCKHOLM'].includes(r.index) ? 'badge-st' : 'badge-sp',
             price:          parseFloat(livePrice).toFixed(2),
             high100:        r.high100.toFixed(2),
             change:         parseFloat(liveChange).toFixed(2),
@@ -1645,60 +1680,7 @@ function toggleChart(i) {
 // ==========================================
 // DEBUG FUNCTION
 // ==========================================
-async function debugAMD() {
-  const banner = document.getElementById('apiBanner');
-  banner.style.cssText = 'display:flex; border-radius:10px; padding:12px 14px; margin-bottom:16px; align-items:center; gap:10px; font-size:11px; line-height:1.6; background:rgba(0,229,255,0.06); border:1px solid rgba(0,229,255,0.25); color:var(--accent); flex-direction:column;';
-  banner.textContent = '🔍 Hämtar AMD-data från Render backend...';
 
-  const days = 100;
-  const to   = Math.floor(Date.now() / 1000);
-  const from = to - (days + 60) * 24 * 3600;
-
-  const url = `https://breakout-api-d8fh.onrender.com/stock?symbol=AMD&days=110&t=${Date.now()}`;
-
-  try {
-    const resp = await fetch(url);
-    const json = await resp.json();
-
-    if (json.error || !json.closes) {
-      banner.innerHTML = `❌ API svarade fel<br>Rådata: ${JSON.stringify(json).substring(0,200)}`;
-      return;
-    }
-
-    const closes     = json.closes;
-    const highs      = json.highs;
-    const volumes    = json.volumes;
-    const timestamps = json.timestamps;
-    
-    // Extra debug: visa första och sista datum
-    const n = closes.length;
-
-    const todayClose     = closes[0]; // nyast först
-    const todayTimestamp = timestamps[0]; // nyast först
-    const todayDate      = json.dates ? json.dates[0] : new Date(todayTimestamp * 1000).toLocaleDateString('sv-SE');
-
-    const lookbackCloses = closes.slice(1, days + 1); // hoppa över idag
-    const high100        = Math.max(...lookbackCloses);
-    const isBreakout     = todayClose > high100;
-
-    const last20vols = volumes.slice(1, 21); // hoppa över idag
-    const avgVol     = last20vols.reduce((s, v) => s + v, 0) / last20vols.length;
-    const volRatio   = (volumes[n-1] / avgVol).toFixed(2);
-
-    banner.innerHTML = `
-      <div style="font-weight:700;color:var(--accent);margin-bottom:4px;">🔍 AMD Debug</div>
-      <div>🌐 URL: <b>${url}</b></div>
-      <div>📅 Senaste data: <b>${todayDate}</b></div>
-      <div>💰 Stängningspris: <b>$${todayClose.toFixed(2)}</b></div>
-      <div>📈 ${days}-dagars högsta (close): <b>$${high100.toFixed(2)}</b></div>
-      <div>🚨 Bryter högsta? <b style="color:${isBreakout ? 'var(--green)' : 'var(--red)'}">${isBreakout ? 'JA ✅' : 'NEJ ❌'}</b></div>
-      <div>📊 Volymfaktor idag: <b>${volRatio}×</b> (behöver ≥ 1.5×)</div>
-      <div>📦 Antal datapunkter: <b>${n} dagar</b></div>
-    `;
-  } catch(err) {
-    banner.textContent = `❌ Fel: ${err.message}`;
-  }
-}
 
 // ==========================================
 // CONSOLIDATION ANALYSIS
