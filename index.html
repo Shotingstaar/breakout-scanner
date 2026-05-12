@@ -562,7 +562,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.8</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.9</span></div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span id="apiVersionBadge" style="font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;letter-spacing:1px;">API v-.-</span>
       <div class="market-status" style="color:var(--adaptive)">
@@ -627,7 +627,7 @@
       <input type="number" id="daysInput" value="100" min="10" max="252">
     </div>
 
-    <div class="control-row">
+    <div class="control-row" id="volFactorRow">
       <div>
         <div class="control-label" style="color:var(--text)">Volymfaktor</div>
         <div class="control-sub" style="color:var(--adaptive)">× normalvolym</div>
@@ -829,19 +829,24 @@ function setMode(mode) {
   });
   consolSettings.style.display = 'none';
 
+  const volRow = document.getElementById('volFactorRow');
+
   if (mode === 'breakout') {
     breakoutBtn.style.background = 'var(--accent)';
     breakoutBtn.style.color = 'var(--bg)';
     breakoutBtn.style.borderColor = 'var(--accent)';
+    if (volRow) volRow.style.display = 'flex';
   } else if (mode === 'consol') {
-    consolBtn.style.background = 'var(--green)';
-    consolBtn.style.color = 'var(--bg)';
-    consolBtn.style.borderColor = 'var(--green)';
+    consolBtn.style.background = '#f59e0b';
+    consolBtn.style.color = '#000';
+    consolBtn.style.borderColor = '#f59e0b';
     consolSettings.style.display = 'block';
+    if (volRow) volRow.style.display = 'flex';
   } else if (mode === 'pre_breakout') {
     preBtn.style.background = '#a855f7';
-    preBtn.style.color = 'var(--bg)';
+    preBtn.style.color = '#fff';
     preBtn.style.borderColor = '#a855f7';
+    if (volRow) volRow.style.display = 'none';
   }
 }
 
