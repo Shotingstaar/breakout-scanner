@@ -561,9 +561,9 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v4.9</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.1</span></div>
     <div style="display:flex;align-items:center;gap:12px;">
-      <span id="apiVersionBadge" style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:1px;">API v-.-</span>
+      <span id="apiVersionBadge" style="font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;letter-spacing:1px;">API v-.-</span>
       <div class="market-status" style="color:var(--adaptive)">
         <div id="statusDot" class="status-dot inactive"></div>
         <span id="statusText">Börsen stängd</span>
@@ -2121,15 +2121,17 @@ async function showHistory() {
       return;
     }
 
-    // Visa nyast först
-    list.innerHTML = history.reverse().map(scan => `
-      <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;" onclick="showScanResults(${JSON.stringify(scan.results).replace(/"/g, '&quot;')})">
+    // Spara historik-data globalt för klick-hantering
+    window._historyData = history;
+
+    list.innerHTML = history.map((scan, idx) => `
+      <div onclick="loadHistoryScan(${idx})" style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div style="font-size:12px;color:var(--accent);font-weight:700;">${scan.scan_date} kl ${scan.scan_time}</div>
-          <div style="font-size:11px;color:var(--green);">${scan.total_found} breakouts</div>
+          <div style="font-size:11px;color:var(--green);">${scan.total_found} träffar</div>
         </div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px;">
-          ${scan.results.slice(0,5).map(r => r.ticker).join(', ')}${scan.results.length > 5 ? '...' : ''}
+        <div style="font-size:10px;color:var(--text);margin-top:4px;">
+          ${scan.results.slice(0,6).map(r => r.ticker).join(', ')}${scan.results.length > 6 ? '...' : ''}
         </div>
       </div>
     `).join('');
@@ -2138,11 +2140,20 @@ async function showHistory() {
   }
 }
 
-function showScanResults(results) {
-  scanResults = results;
-  renderResults(results);
+function loadHistoryScan(idx) {
+  const scan = window._historyData[idx];
+  if (!scan) return;
+  scanResults = scan.results;
+  renderResults(scan.results);
   document.getElementById('historyPanel').style.display = 'none';
-  document.getElementById('resultsCount').textContent = `${results.length} hittade`;
+  document.getElementById('resultsCount').textContent = `${scan.results.length} hittade`;
+  // Visa info-banner med datum
+  const banner = document.getElementById('autoScanInfoBanner');
+  const text   = document.getElementById('autoScanInfoText');
+  if (banner && text) {
+    text.textContent = `Visar skanning från ${scan.scan_date} kl ${scan.scan_time} — ${scan.total_found} träffar`;
+    banner.style.display = 'flex';
+  }
 }
 
 // ==========================================
