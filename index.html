@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v4.5</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v4.7</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -1028,9 +1028,11 @@ async function runScan() {
 
   scanResults = [];
 
-  // Dölj auto-scan-bannern när manuell skanning startar
+  // Dölj auto-scan-bannern och service-panelen när skanning startar
   const autoB = document.getElementById('autoScanInfoBanner');
   if (autoB) autoB.style.display = 'none';
+  const svcPanel = document.getElementById('servicePanel');
+  if (svcPanel) svcPanel.style.display = 'none';
 
   // Visa progress
   const progressEl = document.getElementById('scanProgress');
@@ -1131,11 +1133,11 @@ async function runScan() {
 
     scanned += batch.length;
     const pct = Math.round((scanned / all.length) * 100);
-    progressBar.style.width = pct + '%';
-    progressText.textContent = `${scanned} / ${all.length} aktier — ${scanResults.length} träffar`;
+    if (progressBar) progressBar.style.width = pct + '%';
+    if (progressText) progressText.textContent = `${scanned} / ${all.length} aktier — ${scanResults.length} träffar`;
 
     // Kort paus mellan batchar
-    if (i + BATCH_SIZE < all.length) await delay(500);
+    if (i + BATCH_SIZE < all.length) await delay(300);
   }
 
   scanResults.sort((a, b) => b.volRatio - a.volRatio);
@@ -1955,14 +1957,8 @@ async function triggerBackendScan() {
     progressText.textContent = 'Servern skannar... ca 10-15 min';
   }
 
-  // Simulera progress visuellt (0→90% under 12 min, stannar vid 90% tills klar)
-  let fakeProgress = 0;
-  let fakeTimer = setInterval(() => {
-    if (fakeProgress < 90) {
-      fakeProgress += (90 - fakeProgress) * 0.015;
-      if (progressBar) progressBar.style.width = fakeProgress.toFixed(1) + '%';
-    }
-  }, 5000);
+  // Ingen fake-timer - progressbaren uppdateras per batch nedan
+  let fakeTimer = null; // behålls för att clearInterval-anrop inte ska krascha
 
   autoScanPoller = setInterval(async () => {
     pollCount++;
