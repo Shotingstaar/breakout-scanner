@@ -553,6 +553,7 @@
     white-space: nowrap;
   }
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -561,7 +562,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.1</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.4</span></div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span id="apiVersionBadge" style="font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;letter-spacing:1px;">API v-.-</span>
       <div class="market-status" style="color:var(--adaptive)">
@@ -2143,8 +2144,9 @@ async function showHistory() {
 function loadHistoryScan(idx) {
   const scan = window._historyData[idx];
   if (!scan) return;
-  scanResults = scan.results;
-  renderResults(scan.results);
+  // Lägg till scan_time på varje result så Excel-filnamnet blir rätt
+  scanResults = scan.results.map(r => ({...r, scan_time: scan.scan_time}));
+  renderResults(scanResults);
   document.getElementById('historyPanel').style.display = 'none';
   document.getElementById('resultsCount').textContent = `${scan.results.length} hittade`;
   // Visa info-banner med datum
@@ -2165,22 +2167,83 @@ function downloadExcel() {
     return;
   }
 
-  // Bygg CSV (öppnas i Excel)
-  const headers = ['Ticker','Index','Datum','Pris','Förändring%','100D Högsta','Volym idag','Snittvolym','Volymfaktor'];
+  // Använd skanningsdatum om det är historisk data, annars dagens datum
+  const now = new Date();
+  const scanDate = scanResults[0]?.dateStr || now.toISOString().split('T')[0];
+  const scanTime = scanResults[0]?.scan_time ||
+    `${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  const today = `${scanDate}_${scanTime.replace(':','')}`;
+  const wb = XLSX.utils.book_new();
+
+  // Bygg rader med all data
+  const headers = [
+    'Ticker','Signal','Index','Datum','Pris (USD)','Förändring %',
+    'Sektor','Bullish/Bearish',
+    'MA50 (USD)','MA50 %','MA200 (USD)','MA200 %',
+    'RSI','MACD','MACD Hist','ATR',
+    '100D Högsta','Volym','Snittvolym','Volymfaktor','Styrka',
+    'Avanza','TradingView'
+  ];
+
   const rows = scanResults.map(r => [
-    r.ticker, r.index, r.dateStr, r.price, r.change,
-    r.high100, Math.round(r.todayVol), Math.round(r.avgVol), r.volRatio.toFixed(2)
+    r.ticker,
+    r.isConsol ? 'KONSOLIDERING' : 'BREAKOUT',
+    r.index,
+    r.dateStr || today,
+    parseFloat(r.price) || '',
+    parseFloat(r.change) || '',
+    r.sector || '',
+    r.sector_bullish === true ? 'Bullish' : r.sector_bullish === false ? 'Bearish' : '',
+    r.ma50  || '',
+    r.ma50_pct  != null ? r.ma50_pct  : '',
+    r.ma200 || '',
+    r.ma200_pct != null ? r.ma200_pct : '',
+    r.rsi   || '',
+    r.macd  || '',
+    r.macd_hist || '',
+    r.atr   || '',
+    parseFloat(r.high100) || '',
+    Math.round(r.todayVol) || '',
+    Math.round(r.avgVol)   || '',
+    r.volRatio ? parseFloat(r.volRatio).toFixed(2) : '',
+    r.styrka   ? parseFloat(r.styrka).toFixed(1)   : '',
+    `https://www.avanza.se/ab/sok/inline?query=${r.ticker}`,
+    `https://www.tradingview.com/chart/?symbol=${r.ticker}`
   ]);
 
-  const csv = [headers, ...rows].map(row => row.join(';')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `breakouts_${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showApiBanner('success', '✅ Excel-fil nedladdad!');
+  const wsData = [headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Kolumnbredder
+  ws['!cols'] = [
+    {wch:8},{wch:14},{wch:8},{wch:12},{wch:10},{wch:12},
+    {wch:20},{wch:14},
+    {wch:10},{wch:8},{wch:10},{wch:8},
+    {wch:6},{wch:8},{wch:10},{wch:8},
+    {wch:12},{wch:12},{wch:12},{wch:12},{wch:8},
+    {wch:45},{wch:45}
+  ];
+
+  // Gör Avanza- och TradingView-kolumnerna till klickbara hyperlänkar
+  const avanzaCol  = 21; // kolumn V (0-indexerat)
+  const tvCol      = 22; // kolumn W
+  rows.forEach((row, i) => {
+    const rowNum = i + 2; // rad 1 = header
+    const avanzaCell = XLSX.utils.encode_cell({r: rowNum - 1, c: avanzaCol});
+    const tvCell     = XLSX.utils.encode_cell({r: rowNum - 1, c: tvCol});
+    if (ws[avanzaCell]) {
+      ws[avanzaCell].l = { Target: row[avanzaCol], Tooltip: `Öppna ${row[0]} på Avanza` };
+      ws[avanzaCell].v = `Avanza: ${row[0]}`;
+    }
+    if (ws[tvCell]) {
+      ws[tvCell].l = { Target: row[tvCol], Tooltip: `Öppna ${row[0]} på TradingView` };
+      ws[tvCell].v = `TradingView: ${row[0]}`;
+    }
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Breakouts');
+  XLSX.writeFile(wb, `breakouts_${today}.xlsx`);
+  showApiBanner('success', `✅ Excel exporterad — ${scanResults.length} aktier`);
 }
 
 function updateLastScan() {
