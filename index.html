@@ -561,7 +561,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v4.0</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v4.3</span></div>
     <div class="market-status" style="color:var(--adaptive)">
       <div id="statusDot" class="status-dot inactive"></div>
       <span id="statusText">Börsen stängd</span>
@@ -713,7 +713,7 @@
     ⚡ KÖR AUTOMATISK SKANNING PÅ SERVER
   </button>
 
-  <!-- History & Download buttons -->
+  <!-- History, Excel & Service buttons -->
   <div style="display:flex;gap:8px;margin-bottom:16px;">
     <button onclick="showHistory()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;">
       📅 HISTORIK
@@ -721,6 +721,43 @@
     <button onclick="downloadExcel()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--green);border-radius:8px;color:var(--green);font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;">
       ⬇ EXCEL
     </button>
+    <button onclick="toggleServicePanel()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;">
+      ⚙ SERVICE
+    </button>
+  </div>
+
+  <!-- Service panel -->
+  <div id="servicePanel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--accent);letter-spacing:1px;">⚙ SERVICE</div>
+      <button onclick="document.getElementById('servicePanel').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <a href="https://dashboard.uptimerobot.com/monitors" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,229,255,0.04);border:1px solid var(--border);border-radius:8px;text-decoration:none;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px;">🤖</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--accent);font-family:'Space Mono',monospace;letter-spacing:1px;">UPTIMEROBOT</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Hantera monitorer · dashboard.uptimerobot.com</div>
+        </div>
+        <div style="margin-left:auto;color:var(--muted);font-size:14px;">↗</div>
+      </a>
+      <a href="https://stats.uptimerobot.com/hK3d1fbhfk" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,229,255,0.04);border:1px solid var(--border);border-radius:8px;text-decoration:none;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px;">📊</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--accent);font-family:'Space Mono',monospace;letter-spacing:1px;">STATUS PAGE</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">API-status · stats.uptimerobot.com</div>
+        </div>
+        <div style="margin-left:auto;color:var(--muted);font-size:14px;">↗</div>
+      </a>
+      <a href="https://dashboard.render.com" target="_blank" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(0,229,255,0.04);border:1px solid var(--border);border-radius:8px;text-decoration:none;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:22px;">🚀</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--accent);font-family:'Space Mono',monospace;letter-spacing:1px;">RENDER</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Backend-deploy · dashboard.render.com</div>
+        </div>
+        <div style="margin-left:auto;color:var(--muted);font-size:14px;">↗</div>
+      </a>
+    </div>
   </div>
 
   <!-- History panel -->
@@ -1895,12 +1932,33 @@ async function triggerBackendScan() {
 
   if (autoScanPoller) clearInterval(autoScanPoller);
 
-  showScanningStatus('⏳ Skanning startad — tar ca 10–15 min...');
+  showScanningStatus('⏳ Skanning startad på servern — hämtar data för alla aktier...');
+
+  // Visa en animerad progress-rad
+  const progressEl = document.getElementById('scanProgress');
+  const progressBar = document.getElementById('progressBar');
+  const progressText = document.getElementById('progressText');
+  if (progressEl) {
+    progressEl.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = 'Servern skannar... ca 10-15 min';
+  }
+
+  // Simulera progress visuellt (0→90% under 12 min, stannar vid 90% tills klar)
+  let fakeProgress = 0;
+  let fakeTimer = setInterval(() => {
+    if (fakeProgress < 90) {
+      fakeProgress += (90 - fakeProgress) * 0.015;
+      if (progressBar) progressBar.style.width = fakeProgress.toFixed(1) + '%';
+    }
+  }, 5000);
 
   autoScanPoller = setInterval(async () => {
     pollCount++;
     const elapsed = Math.round((Date.now() - startTime) / 60000);
-    showScanningStatus(`⏳ Skannar... ${elapsed} min`);
+    const elapsedSec = Math.round((Date.now() - startTime) / 1000);
+    showScanningStatus(`⏳ Skannar på servern... ${elapsed > 0 ? elapsed + ' min' : elapsedSec + ' sek'}`);
+    if (progressText) progressText.textContent = `Servern skannar... ${elapsed > 0 ? elapsed + ' min elapsed' : 'startar...'}`;
 
     try {
       const resp = await fetch(`${API_URL}/latest_scan`);
@@ -1917,5 +1975,185 @@ async function triggerBackendScan() {
       autoScanPoller = null;
       if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '⚡ KÖR AUTOMATISK SKANNING PÅ SERVER'; }
 
-      const mapped = json.results.map(r => {
-     
+      // Hämta dagens faktiska pris och förändring för varje träff
+      const mapped = await Promise.all(json.results.map(async r => {
+        const isConsol = r.scan_mode === 'consol';
+        let liveChange = r.change;
+        let livePrice  = r.price;
+        try {
+          const q = await fetch(`${API_URL}/quote?symbol=${r.ticker}`);
+          if (q.ok) {
+            const qj = await q.json();
+            if (qj.price)        livePrice  = qj.price;
+            if (qj.change_pct !== undefined) liveChange = qj.change_pct;
+          }
+        } catch(e) {}
+        const styrka = (r.volRatio * (isConsol ? 1.3 : 1.0)) + Math.max(0, liveChange || 0) / 10;
+        return {
+          ticker: r.ticker, index: r.index,
+          badge: r.index === 'DOW' ? 'badge-dj' : 'badge-sp',
+          price:   parseFloat(livePrice).toFixed(2),
+          high100: r.high100?.toFixed(2),
+          change:  parseFloat(liveChange).toFixed(2),
+          avgVol: r.avgVol, todayVol: r.todayVol,
+          volRatio: r.volRatio, days: r.days, dateStr: r.scan_date,
+          isOld: false, isConsol, styrka,
+          rsi: r.rsi, ma50: r.ma50, ma200: r.ma200,
+          ma50_pct: r.ma50_pct, ma200_pct: r.ma200_pct,
+          macd: r.macd, macd_hist: r.macd_hist, atr: r.atr,
+          sector: r.sector, sector_bullish: r.sector_bullish,
+          priceHistory: []
+        };
+      }));
+
+      clearInterval(fakeTimer);
+      if (progressEl) progressEl.style.display = 'none';
+      if (progressBar) progressBar.style.width = '100%';
+
+      scanResults = mapped.sort((a, b) => b.styrka - a.styrka);
+      renderResults(scanResults);
+      document.getElementById('resultsCount').textContent = `${scanResults.length} hittade`;
+      document.getElementById('autoScanInfoBanner').style.display = 'none';
+      showApiBanner('success', `✅ Skanning klar! ${json.count} breakouts hittade.`);
+
+    } catch(e) {
+      console.warn('Poll-fel:', e);
+    }
+
+    // Ge upp efter 25 min
+    if (pollCount > 50) {
+      clearInterval(autoScanPoller);
+      autoScanPoller = null;
+      clearInterval(fakeTimer);
+      if (progressEl) progressEl.style.display = 'none';
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '⚡ KÖR AUTOMATISK SKANNING PÅ SERVER'; }
+      showApiBanner('error', '⏱ Timeout — skanningen tar längre tid än väntat. Ladda om sidan om en stund.');
+    }
+  }, 30000);
+}
+
+// ==========================================
+// STOP SCAN
+// ==========================================
+let scanAborted = false;
+
+function stopScan() {
+  scanAborted = true;
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('scanBtn').querySelector('span').textContent = '▶ Kör skanning';
+  showApiBanner('success', '⏹ Skanning stoppad');
+}
+
+// ==========================================
+// SAVE SCAN TO HISTORY
+// ==========================================
+async function saveScanToHistory(results, settings) {
+  try {
+    await fetch(`${API_URL}/save_scan`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        results: results.map(r => ({
+          ticker: r.ticker,
+          index: r.index,
+          price: r.price,
+          high100: r.high100,
+          change: r.change,
+          volRatio: r.volRatio,
+          todayVol: r.todayVol,
+          avgVol: r.avgVol,
+          dateStr: r.dateStr
+        })),
+        settings
+      })
+    });
+  } catch(e) {
+    console.warn('Kunde inte spara historik:', e);
+  }
+}
+
+// ==========================================
+// SHOW HISTORY
+// ==========================================
+async function toggleServicePanel() {
+  const panel = document.getElementById('servicePanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function showHistory() {
+  const panel = document.getElementById('historyPanel');
+  const list  = document.getElementById('historyList');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'none') return;
+
+  list.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px;">Laddar...</div>';
+
+  try {
+    const resp = await fetch(`${API_URL}/history`);
+    const json = await resp.json();
+    const history = json.history || [];
+
+    if (history.length === 0) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:20px;">Ingen historik sparad ännu</div>';
+      return;
+    }
+
+    // Visa nyast först
+    list.innerHTML = history.reverse().map(scan => `
+      <div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;" onclick="showScanResults(${JSON.stringify(scan.results).replace(/"/g, '&quot;')})">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:12px;color:var(--accent);font-weight:700;">${scan.scan_date} kl ${scan.scan_time}</div>
+          <div style="font-size:11px;color:var(--green);">${scan.total_found} breakouts</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">
+          ${scan.results.slice(0,5).map(r => r.ticker).join(', ')}${scan.results.length > 5 ? '...' : ''}
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="color:var(--red);font-size:11px;text-align:center;padding:20px;">Kunde inte ladda historik</div>';
+  }
+}
+
+function showScanResults(results) {
+  scanResults = results;
+  renderResults(results);
+  document.getElementById('historyPanel').style.display = 'none';
+  document.getElementById('resultsCount').textContent = `${results.length} hittade`;
+}
+
+// ==========================================
+// EXCEL EXPORT
+// ==========================================
+function downloadExcel() {
+  if (!scanResults || scanResults.length === 0) {
+    showApiBanner('error', '⚠️ Inga resultat att exportera — kör en skanning först');
+    return;
+  }
+
+  // Bygg CSV (öppnas i Excel)
+  const headers = ['Ticker','Index','Datum','Pris','Förändring%','100D Högsta','Volym idag','Snittvolym','Volymfaktor'];
+  const rows = scanResults.map(r => [
+    r.ticker, r.index, r.dateStr, r.price, r.change,
+    r.high100, Math.round(r.todayVol), Math.round(r.avgVol), r.volRatio.toFixed(2)
+  ]);
+
+  const csv = [headers, ...rows].map(row => row.join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `breakouts_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showApiBanner('success', '✅ Excel-fil nedladdad!');
+}
+
+function updateLastScan() {
+  const now = new Date();
+  document.getElementById('lastScan').textContent =
+    `Senaste skanning: ${now.toLocaleTimeString('sv-SE', {hour:'2-digit',minute:'2-digit'})} — ${now.toLocaleDateString('sv-SE')}`;
+}
+</script>
+</body>
+</html>
