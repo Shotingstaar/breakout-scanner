@@ -562,7 +562,7 @@
 <div class="app">
   <!-- Header -->
   <div class="header">
-    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.6</span></div>
+    <div class="logo">BREAK<span>OUT</span> <span style="font-size:15px;color:#aab4c8;font-weight:600;">v5.7</span></div>
     <div style="display:flex;align-items:center;gap:12px;">
       <span id="apiVersionBadge" style="font-size:10px;color:var(--accent);font-family:'Space Mono',monospace;letter-spacing:1px;">API v-.-</span>
       <div class="market-status" style="color:var(--adaptive)">
@@ -1850,10 +1850,23 @@ async function loadLatestScan() {
       // Sortera på styrka — högst potential överst
       scanResults = mapped.sort((a, b) => b.styrka - a.styrka);
 
+      // Kolla om sidan visar gammal data — tvinga reload om scan_date är nyare
+      const newScanDate = json.results[0]?.scan_date || '';
+      const newScanTime = json.results[0]?.scan_time?.slice(0,5) || '';
+      const lastShown   = sessionStorage.getItem('lastScanDateTime');
+      const newDateTime = `${newScanDate}_${newScanTime}`;
+      if (lastShown && lastShown !== newDateTime) {
+        // Ny data finns — ladda om sidan för att rensa cache
+        sessionStorage.setItem('lastScanDateTime', newDateTime);
+        window.location.reload(true);
+        return;
+      }
+      sessionStorage.setItem('lastScanDateTime', newDateTime);
+
       renderResults(scanResults);
       document.getElementById('resultsCount').textContent = `${scanResults.length} hittade`;
-      const scanDate = json.results[0]?.scan_date || '';
-      const scanTime = json.results[0]?.scan_time?.slice(0,5) || '';
+      const scanDate = newScanDate;
+      const scanTime = newScanTime;
       document.getElementById('lastScan').textContent = `Senaste autoskanning: ${scanDate}`;
 
       // Visa tydlig banner som förklarar att dessa är från auto-skanningen
